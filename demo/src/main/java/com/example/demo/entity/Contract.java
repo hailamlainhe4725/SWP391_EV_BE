@@ -19,4 +19,10 @@ public class Contract {
     private LocalDate endDate;
 
     private String terms;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+    private String description;
+    private boolean deleted = false;
 }

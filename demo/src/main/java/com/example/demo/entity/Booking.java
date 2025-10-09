@@ -2,45 +2,42 @@ package com.example.demo.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.FieldDefaults;
+
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "booking")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class Booking {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long bookingId;
+    Long bookingId;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JoinColumn(name = "vehicle_id", nullable = false)
+    Vehicle vehicle;
 
     @ManyToOne
-    @JoinColumn(name = "vehicle_id")
-    private Vehicle vehicle;
+    @JoinColumn(name = "user_id", nullable = false)
+    User user;
 
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
+    @Column(nullable = false)
+    LocalDateTime startTime;
 
-    @Enumerated(EnumType.STRING)
-    private Status status;
+    @Column(nullable = false)
+    LocalDateTime endTime;
 
-    public enum Status {
-        PENDING, APPROVED, REJECTED, COMPLETED
-    }
+    @Column(nullable = false)
+    @Builder.Default
+    String status = "Pending"; // Pending, Confirmed, Completed, Cancelled
 
-    private LocalDateTime bookingDate;
-
-    // existing methods
-
-    public void setBookingDate(LocalDateTime bookingDate) {
-        this.bookingDate = bookingDate;
-    }
-
-    public LocalDateTime getBookingDate() {
-        return bookingDate;
-    }
+    @Builder.Default
+    Boolean deleted = false;
 }

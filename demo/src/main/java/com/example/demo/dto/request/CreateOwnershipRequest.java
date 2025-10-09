@@ -1,14 +1,18 @@
 package com.example.demo.dto.request;
 
-import java.time.LocalDate;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
-import lombok.Data;
-
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class CreateOwnershipRequest {
-    private Long userId;
-    private Long vehicleId;
-    private Double sharePercentage;
-    private Double purchasePrice;
-    private LocalDate purchaseDate;
+    Long userId;
+    Long vehicleId;
+    Double totalSharePercentage;
+    String status; // Active / Inactive
+
 }

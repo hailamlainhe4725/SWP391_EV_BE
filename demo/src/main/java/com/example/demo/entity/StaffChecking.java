@@ -2,37 +2,55 @@ package com.example.demo.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.FieldDefaults;
+
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "staff_checking")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class StaffChecking {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long checkingId;
+    Long checkingId;
 
     @ManyToOne
-    @JoinColumn(name = "vehicle_id")
-    private Vehicle vehicle;
+    @JoinColumn(name = "vehicle_id", nullable = false)
+    Vehicle vehicle;
 
     @ManyToOne
-    @JoinColumn(name = "staff_id")
-    private User staff;
+    @JoinColumn(name = "user_id", nullable = false)
+    User user;
 
-    private double batteryLevel;
-    private double odometer;
-    private String damageReport;
-    private LocalDateTime checkTime;
-    private Booking booking;
-    @Enumerated(EnumType.STRING)
-    private Type checkType;
+    @ManyToOne
+    @JoinColumn(name = "staff_id", nullable = false)
+    User staff;
 
-    public enum Type {
-        CHECKIN, CHECKOUT
-    }
+    @ManyToOne
+    @JoinColumn(name = "booking_id", nullable = false)
+    Booking booking;
 
-    private String status;
+    @Column(nullable = false)
+    String checkType; // CheckIn, CheckOut
+
+    @Column(nullable = false)
+    @Builder.Default
+    LocalDateTime checkTime = LocalDateTime.now();
+
+    Double odometer; // số km thực tế
+    Double batteryPercent; // phần trăm pin
+    Boolean damageReported; // xe có bị hư hại?
+    String notes; // ghi chú staff
+
+    Double distanceTraveled; // hệ thống tính toán (CheckIn - CheckOut)
+    Double batteryUsedPercent; // hệ thống tính toán
+
+    @Builder.Default
+    Boolean deleted = false;
 }

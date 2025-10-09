@@ -11,5 +11,5 @@ import org.springframework.stereotype.Repository;
 public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
     List<Vehicle> findByStatus(String status);
 
-    boolean existsByLicensePlate(String licensePlate);
+    boolean existsByPlateNumber(String plateNumber);
 }

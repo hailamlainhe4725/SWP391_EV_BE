@@ -1,77 +1,76 @@
 package com.example.demo.service;
 
-import com.example.demo.entity.Invoice;
-import com.example.demo.entity.InvoiceDetail;
-import com.example.demo.entity.User;
-import com.example.demo.entity.Vehicle;
+import com.example.demo.dto.response.InvoiceDetailResponse;
+import com.example.demo.dto.response.InvoiceResponse;
+import com.example.demo.entity.*;
 import com.example.demo.exception.ResourceNotFoundException;
-import com.example.demo.repository.InvoiceRepository;
-import com.example.demo.repository.UserRepository;
-import com.example.demo.repository.VehicleRepository;
+import com.example.demo.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class InvoiceService {
-    private final InvoiceRepository invoiceRepository;
-    private final UserRepository userRepository;
-    private final VehicleRepository vehicleRepository;
+        private final InvoiceRepository invoiceRepository;
+        private final InvoiceDetailRepository invoiceDetailRepository;
+        private final UserRepository userRepository;
 
-    public Invoice createInvoice(Long userId, Long vehicleId,
-            List<InvoiceDetail> details) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Vehicle vehicle = vehicleRepository.findById(vehicleId)
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
-
-        Invoice inv = Invoice.builder()
-                .user(user)
-                .vehicle(vehicle)
-                .issuedDate(LocalDateTime.now())
-                .status("Pending")
-                .build();
-
-        BigDecimal total = BigDecimal.ZERO;
-        for (InvoiceDetail d : details) {
-            d.setInvoice(inv);
-            total = total.add(BigDecimal.valueOf(d.getAmount()));
+        public List<InvoiceResponse> getByUserEmail(String email) {
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                return invoiceRepository.findByUser(user).stream()
+                                .filter(i -> !i.isDeleted())
+                                .map(this::mapToResponse)
+                                .collect(Collectors.toList());
         }
-        inv.setTotalAmount(total.doubleValue());
-        Invoice saved = invoiceRepository.save(inv);
-        saved.setDetails(details);
-        return saved;
-    }
 
-    public List<Invoice> getAllInvoices() {
-        return invoiceRepository.findAll();
-    }
+        public List<InvoiceResponse> getAll() {
+                return invoiceRepository.findAll().stream()
+                                .filter(i -> !i.isDeleted())
+                                .map(this::mapToResponse)
+                                .collect(Collectors.toList());
+        }
 
-    public List<Invoice> getInvoicesByUser(Long userId) {
-        return invoiceRepository.findByUserUserId(userId);
-    }
+        public InvoiceResponse getById(Long id) {
+                Invoice invoice = invoiceRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
+                invoice.setDetails(invoiceDetailRepository.findByInvoice(invoice));
+                return mapToResponse(invoice);
+        }
 
-    public Optional<Invoice> getInvoiceById(Integer id) {
-        return invoiceRepository.findById(id);
-    }
+        public void softDelete(Long id) {
+                Invoice invoice = invoiceRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
+                invoice.setDeleted(true);
+                invoiceRepository.save(invoice);
+        }
 
-    public Invoice saveInvoice(Invoice invoice) {
-        return invoiceRepository.save(invoice);
-    }
+        private InvoiceResponse mapToResponse(Invoice invoice) {
+                List<InvoiceDetail> details = invoice.getDetails() != null
+                                ? invoice.getDetails()
+                                : invoiceDetailRepository.findByInvoice(invoice);
 
-    public void deleteInvoice(Long id) {
-        invoiceRepository.deleteById(id.intValue());
-    }
+                double total = details.stream()
+                                .filter(d -> !d.isDeleted())
+                                .mapToDouble(InvoiceDetail::getAmount)
+                                .sum();
 
-    public Invoice getById(Integer id) {
-        return invoiceRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
-    }
-
-    public List<Invoice> getByUser(Long userId) {
-        return invoiceRepository.findByUserUserId(userId);
-    }
+                return InvoiceResponse.builder()
+                                .invoiceId(invoice.getInvoiceId())
+                                .userId(invoice.getUser().getId())
+                                .vehicleId(invoice.getVehicle().getVehicleId())
+                                .status(invoice.getStatus())
+                                .totalAmount(total)
+                                .issuedDate(invoice.getIssuedDate())
+                                .dueDate(invoice.getDueDate())
+                                .details(details.stream().map(d -> InvoiceDetailResponse.builder()
+                                                .feeType(d.getFeeType())
+                                                .amount(d.getAmount())
+                                                .description(d.getDescription())
+                                                .build()).collect(Collectors.toList()))
+                                .build();
+        }
 }

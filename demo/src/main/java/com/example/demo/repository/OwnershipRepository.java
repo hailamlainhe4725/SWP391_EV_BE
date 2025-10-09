@@ -1,13 +1,18 @@
 package com.example.demo.repository;
 
-import com.example.demo.entity.OwnerShip;
+import com.example.demo.entity.Ownership;
+import com.example.demo.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.Optional;
 
-@Repository
-public interface OwnershipRepository extends JpaRepository<OwnerShip, Long> {
-    List<OwnerShip> findByOwner_UserId(Long userId);
+public interface OwnershipRepository extends JpaRepository<Ownership, Long> {
+    // find ownerships for a given user (not deleted)
+    List<Ownership> findByUserAndDeletedFalse(User user);
 
-    List<OwnerShip> findByVehicle_VehicleId(Long vehicleId);
+    // all ownerships not deleted
+    List<Ownership> findByDeletedFalse();
+
+    // helper: find by id and not deleted
+    Optional<Ownership> findByOwnershipIdAndDeletedFalse(Long ownershipId);
 }

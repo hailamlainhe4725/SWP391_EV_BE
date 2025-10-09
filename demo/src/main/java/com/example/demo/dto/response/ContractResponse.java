@@ -1,18 +1,13 @@
 package com.example.demo.dto.response;
 
+import lombok.Data;
 import java.time.LocalDate;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 public class ContractResponse {
-    private Long contractId;
-    private String title;
+    private Long id;
+    private String description;
     private LocalDate startDate;
     private LocalDate endDate;
-    private Double totalValue;
+    private String userEmail; // email của người sở hữu hợp đồng
 }

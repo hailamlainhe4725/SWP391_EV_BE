@@ -1,81 +1,119 @@
 package com.example.demo.service;
 
-import com.example.demo.entity.Booking;
-import com.example.demo.entity.StaffChecking;
-import com.example.demo.entity.User;
+import com.example.demo.dto.request.CreateStaffCheckingRequest;
+import com.example.demo.dto.response.StaffCheckingResponse;
+import com.example.demo.entity.*;
 import com.example.demo.exception.ResourceNotFoundException;
-import com.example.demo.repository.BookingRepository;
-import com.example.demo.repository.StaffCheckingRepository;
-import com.example.demo.repository.UserRepository;
+import com.example.demo.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class StaffCheckingService {
-    private final StaffCheckingRepository staffCheckingRepository;
-    private final BookingRepository bookingRepository;
-    private final UserRepository userRepository;
 
-    public StaffChecking createCheckOut(Integer bookingId, Long staffId,
-            StaffChecking sc) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-        User staff = userRepository.findById(staffId)
-                .orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
-        sc.setBooking(booking);
-        sc.setStaff(staff);
-        sc.setCheckType(StaffChecking.Type.CHECKOUT);
-        sc.setCheckTime(LocalDateTime.now());
-        sc.setStatus("pending");
-        return staffCheckingRepository.save(sc);
-    }
+        private final StaffCheckingRepository staffCheckingRepository;
+        private final UserRepository userRepository;
+        private final VehicleRepository vehicleRepository;
+        private final BookingRepository bookingRepository;
 
-    public StaffChecking createCheckIn(Integer bookingId, Long staffId,
-            StaffChecking sc) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-        User staff = userRepository.findById(staffId)
-                .orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
-        sc.setBooking(booking);
-        sc.setStaff(staff);
-        sc.setCheckType(StaffChecking.Type.CHECKIN);
-        sc.setCheckTime(LocalDateTime.now());
-        sc.setStatus("pending");
-        return staffCheckingRepository.save(sc);
-    }
+        // === Staff: lấy toàn bộ checking
+        public List<StaffCheckingResponse> getAll() {
+                return staffCheckingRepository.findByDeletedFalse().stream()
+                                .map(this::mapToResponse)
+                                .collect(Collectors.toList());
+        }
 
-    public StaffChecking getById(Integer id) {
-        return staffCheckingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("StaffChecking not found"));
-    }
+        // === User: xem lịch sử checkin/checkout theo booking
+        public List<StaffCheckingResponse> getByBooking(Long bookingId) {
+                Booking booking = bookingRepository.findById(bookingId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+                return staffCheckingRepository.findByBookingAndDeletedFalse(booking)
+                                .stream()
+                                .map(this::mapToResponse)
+                                .collect(Collectors.toList());
+        }
 
-    public List<StaffChecking> getByBooking(Long bookingId) {
-        return staffCheckingRepository.findByBookingBookingId(bookingId);
-    }
+        // === Staff: tạo mới checking (CheckIn hoặc CheckOut)
+        public StaffCheckingResponse create(CreateStaffCheckingRequest req) {
+                Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
+                                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+                User user = userRepository.findById(req.getUserId())
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                User staff = userRepository.findById(req.getStaffId())
+                                .orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
+                Booking booking = bookingRepository.findById(req.getBookingId())
+                                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
-    public List<StaffChecking> getAllChecks() {
-        return staffCheckingRepository.findAll();
-    }
+                // Nếu là CheckIn thì tự động tính toán thông tin
+                Double distanceTraveled = null;
+                Double batteryUsedPercent = null;
 
-    public List<StaffChecking> getByVehicle(Long vehicleId) {
-        return staffCheckingRepository.findByVehicleVehicleId(vehicleId);
-    }
+                if (req.getCheckType().equalsIgnoreCase("CheckIn")) {
+                        // Lấy CheckOut đầu tiên của cùng booking (nếu có)
+                        StaffChecking checkout = staffCheckingRepository.findByBookingAndDeletedFalse(booking).stream()
+                                        .filter(sc -> "CheckOut".equalsIgnoreCase(sc.getCheckType()))
+                                        .findFirst().orElse(null);
 
-    public List<StaffChecking> getById(Long id) {
-        return staffCheckingRepository.findByBookingBookingId(id);
-    }
+                        if (checkout != null && req.getOdometer() != null && checkout.getOdometer() != null) {
+                                distanceTraveled = (double) req.getOdometer() - checkout.getOdometer();
+                        }
 
-    public StaffChecking save(StaffChecking check) {
-        return staffCheckingRepository.save(check);
-    }
+                        if (checkout != null && req.getBatteryPercent() != null
+                                        && checkout.getBatteryPercent() != null) {
+                                batteryUsedPercent = (double) checkout.getBatteryPercent() - req.getBatteryPercent();
+                        }
+                }
 
-    public void delete(Long id) {
-        staffCheckingRepository.deleteById(id.intValue());
-    }
+                StaffChecking checking = StaffChecking.builder()
+                                .vehicle(vehicle)
+                                .user(user)
+                                .staff(staff)
+                                .booking(booking)
+                                .checkType(req.getCheckType())
+                                .odometer(req.getOdometer())
+                                .batteryPercent(req.getBatteryPercent())
+                                .damageReported(req.getDamageReported())
+                                .notes(req.getNotes())
+                                .distanceTraveled(distanceTraveled)
+                                .batteryUsedPercent(batteryUsedPercent)
+                                .deleted(false)
+                                .build();
 
+                staffCheckingRepository.save(checking);
+                return mapToResponse(checking);
+        }
+
+        // === Staff: soft delete
+        public void softDelete(Long id) {
+                StaffChecking sc = staffCheckingRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException("Staff checking not found"));
+                sc.setDeleted(true);
+                staffCheckingRepository.save(sc);
+        }
+
+        // === Mapper
+        private StaffCheckingResponse mapToResponse(StaffChecking sc) {
+                return StaffCheckingResponse.builder()
+                                .checkingId(sc.getCheckingId())
+                                .vehicleId(sc.getVehicle().getVehicleId())
+                                .vehicleModel(sc.getVehicle().getModel())
+                                .userId(sc.getUser().getId())
+                                .userName(sc.getUser().getFullName())
+                                .staffId(sc.getStaff().getId())
+                                .staffName(sc.getStaff().getFullName())
+                                .bookingId(sc.getBooking().getBookingId())
+                                .checkType(sc.getCheckType())
+                                .checkTime(sc.getCheckTime())
+                                .odometer(sc.getOdometer())
+                                .batteryPercent(sc.getBatteryPercent())
+                                .damageReported(sc.getDamageReported())
+                                .notes(sc.getNotes())
+                                .distanceTraveled(sc.getDistanceTraveled())
+                                .batteryUsedPercent(sc.getBatteryUsedPercent())
+                                .build();
+        }
 }

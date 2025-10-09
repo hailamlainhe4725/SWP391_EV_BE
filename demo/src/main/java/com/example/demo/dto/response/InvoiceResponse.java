@@ -1,19 +1,23 @@
 package com.example.demo.dto.response;
 
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 import java.time.LocalDateTime;
+import java.util.List;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@AllArgsConstructor
+@Getter
+@Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class InvoiceResponse {
-    private Long invoiceId;
-    private Long userId;
-    private Long vehicleId;
-    private Double totalAmount;
-    private String description;
-    private LocalDateTime createdAt;
+    Long invoiceId;
+    Long userId;
+    Long vehicleId;
+    String status;
+    Double totalAmount;
+    LocalDateTime issuedDate;
+    LocalDateTime dueDate;
+    List<InvoiceDetailResponse> details;
 }

@@ -1,5 +1,8 @@
 package com.example.demo.service;
 
+import com.example.demo.dto.request.CreateBookingRequest;
+import com.example.demo.dto.request.UpdateBookingStatusRequest;
+import com.example.demo.dto.response.BookingResponse;
 import com.example.demo.entity.Booking;
 import com.example.demo.entity.User;
 import com.example.demo.entity.Vehicle;
@@ -10,57 +13,87 @@ import com.example.demo.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class BookingService {
+
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
 
-    public Booking create(Long userId, Long vehicleId, Booking booking) {
-        User user = userRepository.findById(userId)
+    // === User: get all bookings by email
+    public List<BookingResponse> getByUserEmail(String email) {
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+        return bookingRepository.findByUserAndDeletedFalse(user)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    // === Staff: get all bookings
+    public List<BookingResponse> getAll() {
+        return bookingRepository.findByDeletedFalse().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    // === User: create booking
+    public BookingResponse create(CreateBookingRequest req, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
 
-        if (!"Available".equalsIgnoreCase(vehicle.getStatus())) {
-            throw new IllegalStateException("Vehicle not available");
+        if (req.getEndTime().isBefore(req.getStartTime())) {
+            throw new IllegalArgumentException("End time must be after start time");
         }
 
-        if (bookingRepository.existsByUserAndStatus(user, "Pending")) {
-            throw new IllegalStateException("User already has a pending booking");
-        }
+        Booking booking = Booking.builder()
+                .user(user)
+                .vehicle(vehicle)
+                .startTime(req.getStartTime())
+                .endTime(req.getEndTime())
+                .status("Pending")
+                .deleted(false)
+                .build();
 
-        booking.setUser(user);
-        booking.setVehicle(vehicle);
-        booking.setStatus(Booking.Status.PENDING);
-        booking.setBookingDate(LocalDateTime.now());
-        return bookingRepository.save(booking);
+        bookingRepository.save(booking);
+        return mapToResponse(booking);
     }
 
-    public Booking updateStatus(Integer id, String status) {
-        Booking b = getById(id);
-        b.setStatus(Booking.Status.valueOf(status.toUpperCase()));
-        return bookingRepository.save(b);
-    }
-
-    public Booking getById(Integer id) {
-        return bookingRepository.findById(id)
+    // === Staff: update status (Confirm/Complete/Cancel)
+    public BookingResponse updateStatus(Long bookingId, UpdateBookingStatusRequest req) {
+        Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+        booking.setStatus(req.getStatus());
+        bookingRepository.save(booking);
+        return mapToResponse(booking);
     }
 
-    public List<Booking> getAll() {
-        return bookingRepository.findAll();
+    // === Soft delete (staff)
+    public void softDelete(Long id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+        booking.setDeleted(true);
+        bookingRepository.save(booking);
     }
 
-    public List<Booking> getByUserId(Integer userId) {
-        return bookingRepository.findByUserUserId(userId);
-    }
-
-    public List<Booking> getByVehicleId(Integer vehicleId) {
-        return bookingRepository.findByVehicleVehicleId(vehicleId);
+    // === Mapper
+    private BookingResponse mapToResponse(Booking b) {
+        return BookingResponse.builder()
+                .bookingId(b.getBookingId())
+                .userId(b.getUser().getId())
+                .userName(b.getUser().getFullName())
+                .vehicleId(b.getVehicle().getVehicleId())
+                .vehicleModel(b.getVehicle().getModel())
+                .startTime(b.getStartTime())
+                .endTime(b.getEndTime())
+                .status(b.getStatus())
+                .build();
     }
 }

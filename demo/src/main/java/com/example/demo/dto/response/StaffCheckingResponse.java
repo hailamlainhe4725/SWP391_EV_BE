@@ -1,21 +1,31 @@
 package com.example.demo.dto.response;
 
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
 import java.time.LocalDateTime;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@AllArgsConstructor
+@Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class StaffCheckingResponse {
-    private Long id;
-    private Long vehicleId;
-    private String vehicleModel;
-    private Double batteryLevel;
-    private Double odometer;
-    private String conditionNote;
-    private LocalDateTime checkInTime;
-    private LocalDateTime checkOutTime;
+    Long checkingId;
+    Long vehicleId;
+    String vehicleModel;
+    Long userId;
+    String userName;
+    Long staffId;
+    String staffName;
+    Long bookingId;
+    String checkType;
+    LocalDateTime checkTime;
+    Double odometer;
+    Double batteryPercent;
+    Boolean damageReported;
+    String notes;
+    Double distanceTraveled;
+    Double batteryUsedPercent;
 }

@@ -1,19 +1,20 @@
 package com.example.demo.dto.response;
 
-import java.time.LocalDate;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@AllArgsConstructor
+@Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class OwnershipResponse {
-    private Long ownershipId;
-    private Long userId;
-    private Long vehicleId;
-    private String vehicleModel;
-    private Double sharePercentage;
-    private LocalDate purchaseDate;
+    Long ownershipId;
+    Long userId;
+    String userName;
+    Long vehicleId;
+    String vehicleModel;
+    Double totalSharePercentage;
+    String status;
 }

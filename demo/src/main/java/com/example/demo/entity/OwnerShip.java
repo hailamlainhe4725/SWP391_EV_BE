@@ -2,28 +2,36 @@ package com.example.demo.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDate;
+import lombok.experimental.FieldDefaults;
 
 @Entity
+@Table(name = "ownership")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class OwnerShip {
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class Ownership {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long ownershipId;
+    Long ownershipId;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JoinColumn(name = "user_id", nullable = false)
+    User user;
 
     @ManyToOne
-    @JoinColumn(name = "vehicle_id")
-    private Vehicle vehicle;
+    @JoinColumn(name = "vehicle_id", nullable = false)
+    Vehicle vehicle;
 
-    private double sharePercentage;
-    private double purchasePrice;
-    private LocalDate purchaseDate;
+    @Column(nullable = false)
+    Double totalSharePercentage;
 
+    @Column(nullable = false)
+    String status; // Active, Transferred
+
+    @Builder.Default
+    Boolean deleted = false;
 }

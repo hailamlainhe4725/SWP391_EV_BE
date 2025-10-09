@@ -1,13 +1,23 @@
 package com.example.demo.dto.request;
 
-import lombok.Data;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class CreateVehicleRequest {
-    private String licensePlate;
-    private String model;
-    private String brand;
-    private Double batteryLevel;
-    private String status; // Available / Maintenance / InUse
-    private String imageUrl;
+    String brand;
+    String model;
+    String plateNumber;
+    String color;
+    Integer year;
+    Double batteryCapacityKWh;
+    Double operatingCostPerDay;
+    Double operatingCostPerKm;
+    String description;
+    String imageUrl;
 }

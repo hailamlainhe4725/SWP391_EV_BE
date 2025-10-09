@@ -1,18 +1,25 @@
 package com.example.demo.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
-@Data
-@AllArgsConstructor
+@Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class VehicleResponse {
-    private Long vehicleId;
-    private String licensePlate;
-    private String model;
-    private String brand;
-    private Double batteryLevel;
-    private String status;
-    private String imageUrl;
+    Long vehicleId;
+    String brand;
+    String model;
+    String plateNumber;
+    String color;
+    Integer year;
+    Double batteryCapacityKWh;
+    Double operatingCostPerDay;
+    Double operatingCostPerKm;
+    String description;
+    String imageUrl;
+    String status;
 }

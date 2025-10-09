@@ -1,15 +1,22 @@
 package com.example.demo.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import java.time.LocalDateTime;
 
-@Data
-@AllArgsConstructor
+@Getter
+@Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class FeeResponse {
-    private Long id;
-    private String name;
-    private Double amount;
-    private String type; // Fixed / Variable
+    Long feeId;
+    String feeType;
+    String sourceType; // "Variable" or "Fixed"
+    Long vehicleId;
+    Long userId;
+    Double amount;
+    String description;
+    LocalDateTime createdAt;
 }

@@ -1,10 +1,16 @@
 package com.example.demo.dto.request;
 
-import lombok.Data;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class CreatePaymentRequest {
-    private Long invoiceId;
-    private Double amount;
-    private String method; // Card, Cash, Transfer
+    Long invoiceId;
+    Double paidAmount;
+    String method;
 }

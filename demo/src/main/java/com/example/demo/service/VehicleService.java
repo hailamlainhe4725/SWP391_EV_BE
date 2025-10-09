@@ -1,55 +1,100 @@
 package com.example.demo.service;
 
+import com.example.demo.dto.request.CreateVehicleRequest;
+import com.example.demo.dto.request.UpdateVehicleRequest;
+import com.example.demo.dto.response.VehicleResponse;
 import com.example.demo.entity.Vehicle;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.VehicleRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class VehicleService {
 
-    @Autowired
-    private VehicleRepository vehicleRepository;
+    private final VehicleRepository vehicleRepository;
 
-    public List<Vehicle> getAllVehicles() {
-        return vehicleRepository.findAll();
+    public List<VehicleResponse> getAll() {
+        return vehicleRepository.findAll().stream()
+                .filter(v -> !Boolean.TRUE.equals(v.getDeleted()))
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
-    public Vehicle getVehicleById(Long id) {
-        return vehicleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found with id " + id));
+    public VehicleResponse getById(Long id) {
+        Vehicle vehicle = vehicleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+        return mapToResponse(vehicle);
     }
 
-    public Vehicle createVehicle(Vehicle vehicle) {
-        if (vehicleRepository.existsByLicensePlate(vehicle.getLicensePlate())) {
-            throw new IllegalArgumentException("License plate already exists");
-        }
-        vehicle.setStatus("Available");
-        return vehicleRepository.save(vehicle);
+    public VehicleResponse create(CreateVehicleRequest req) {
+        Vehicle v = Vehicle.builder()
+                .brand(req.getBrand())
+                .model(req.getModel())
+                .plateNumber(req.getPlateNumber())
+                .color(req.getColor())
+                .year(req.getYear())
+                .batteryCapacityKWh(req.getBatteryCapacityKWh())
+                .operatingCostPerDay(req.getOperatingCostPerDay())
+                .operatingCostPerKm(req.getOperatingCostPerKm())
+                .description(req.getDescription())
+                .imageUrl(req.getImageUrl())
+                .status("Available")
+                .build();
+        vehicleRepository.save(v);
+        return mapToResponse(v);
     }
 
-    public Vehicle updateVehicle(Long id, Vehicle vehicleDetails) {
-        Vehicle vehicle = getVehicleById(id);
+    public VehicleResponse update(Long id, UpdateVehicleRequest req) {
+        Vehicle v = vehicleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
 
-        vehicle.setName(vehicleDetails.getName());
-        vehicle.setBrand(vehicleDetails.getBrand());
-        vehicle.setModel(vehicleDetails.getModel());
-        vehicle.setLicensePlate(vehicleDetails.getLicensePlate());
-        vehicle.setBatteryCapacity(vehicleDetails.getBatteryCapacity());
-        vehicle.setMaxSpeed(vehicleDetails.getMaxSpeed());
-        vehicle.setSeats(vehicleDetails.getSeats());
-        vehicle.setStatus(vehicleDetails.getStatus());
-        vehicle.setImageUrl(vehicleDetails.getImageUrl());
-        vehicle.setDescription(vehicleDetails.getDescription());
+        if (req.getBrand() != null)
+            v.setBrand(req.getBrand());
+        if (req.getModel() != null)
+            v.setModel(req.getModel());
+        if (req.getColor() != null)
+            v.setColor(req.getColor());
+        if (req.getYear() != null)
+            v.setYear(req.getYear());
+        if (req.getOperatingCostPerDay() != null)
+            v.setOperatingCostPerDay(req.getOperatingCostPerDay());
+        if (req.getOperatingCostPerKm() != null)
+            v.setOperatingCostPerKm(req.getOperatingCostPerKm());
+        if (req.getDescription() != null)
+            v.setDescription(req.getDescription());
+        if (req.getStatus() != null)
+            v.setStatus(req.getStatus());
 
-        return vehicleRepository.save(vehicle);
+        vehicleRepository.save(v);
+        return mapToResponse(v);
     }
 
-    public void deleteVehicle(Long id) {
-        Vehicle vehicle = getVehicleById(id);
-        vehicleRepository.delete(vehicle);
+    public void softDelete(Long id) {
+        Vehicle v = vehicleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+        v.setDeleted(true);
+        vehicleRepository.save(v);
+    }
+
+    private VehicleResponse mapToResponse(Vehicle v) {
+        return VehicleResponse.builder()
+                .vehicleId(v.getVehicleId())
+                .brand(v.getBrand())
+                .model(v.getModel())
+                .plateNumber(v.getPlateNumber())
+                .color(v.getColor())
+                .year(v.getYear())
+                .batteryCapacityKWh(v.getBatteryCapacityKWh())
+                .operatingCostPerDay(v.getOperatingCostPerDay())
+                .operatingCostPerKm(v.getOperatingCostPerKm())
+                .description(v.getDescription())
+                .imageUrl(v.getImageUrl())
+                .status(v.getStatus())
+                .build();
     }
 }

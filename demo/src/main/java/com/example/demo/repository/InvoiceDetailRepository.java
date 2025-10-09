@@ -10,6 +10,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface InvoiceDetailRepository extends JpaRepository<InvoiceDetail, Long> {
-
-    List<InvoiceDetail> findByInvoiceId(Integer invoiceId);
+    List<InvoiceDetail> findByInvoice(Invoice invoice);
 }
