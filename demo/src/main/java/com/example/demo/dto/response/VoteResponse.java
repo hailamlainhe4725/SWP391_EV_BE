@@ -1,4 +1,3 @@
-// dto/response/VoteResponse.java
 package com.example.demo.dto.response;
 
 import lombok.Builder;
@@ -10,9 +9,9 @@ import java.time.LocalDateTime;
 public class VoteResponse {
     Long voteId;
     Long topicId;
-    String topicTitle;
+    Long userId;
     String userName;
     Boolean choice;
-    Double weight;
+    Double weight; // từ Ownership
     LocalDateTime votedAt;
 }

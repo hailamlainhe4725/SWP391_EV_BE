@@ -2,6 +2,8 @@ package com.example.demo.repository;
 
 import com.example.demo.entity.Ownership;
 import com.example.demo.entity.User;
+import com.example.demo.entity.Vehicle;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
@@ -19,4 +21,5 @@ public interface OwnershipRepository extends JpaRepository<Ownership, Long> {
     Optional<Ownership> findByUser_UserIdAndVehicle_VehicleId(Long userId, Long vehicleId);
 
     List<Ownership> findByUser_Email(String email);
+
 }

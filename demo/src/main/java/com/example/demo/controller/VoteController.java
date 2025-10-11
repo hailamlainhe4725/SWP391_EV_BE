@@ -1,6 +1,6 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.request.CastVoteRequest;
+import com.example.demo.dto.request.CreateVoteRequest;
 import com.example.demo.dto.request.CreateVoteTopicRequest;
 import com.example.demo.dto.response.VoteResponse;
 import com.example.demo.dto.response.VoteTopicResponse;
@@ -24,24 +24,15 @@ public class VoteController {
     @PreAuthorize("hasRole('STAFF')")
     @PostMapping("/topics")
     public ResponseEntity<VoteTopicResponse> createTopic(@RequestBody CreateVoteTopicRequest req) {
-        VoteTopicResponse res = voteService.createTopic(
-                req.getOwnershipId(),
-                req.getCreatorId(),
-                req.getTitle(),
-                req.getDescription(),
-                req.getDecisionType());
+        VoteTopicResponse res = voteService.createTopic(req);
         return ResponseEntity.ok(res);
     }
 
     // ===== USER bỏ phiếu =====
     @PreAuthorize("hasRole('USER')")
     @PostMapping
-    public ResponseEntity<VoteResponse> castVote(@RequestBody CastVoteRequest req) {
-        VoteResponse res = voteService.castVote(
-                req.getTopicId(),
-                req.getUserId(),
-                req.isAgree(),
-                req.getWeight());
+    public ResponseEntity<VoteResponse> castVote(@RequestBody CreateVoteRequest req) {
+        VoteResponse res = voteService.castVote(req);
         return ResponseEntity.ok(res);
     }
 

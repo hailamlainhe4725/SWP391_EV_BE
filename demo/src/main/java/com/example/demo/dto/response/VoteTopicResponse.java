@@ -1,4 +1,3 @@
-// dto/response/VoteTopicResponse.java
 package com.example.demo.dto.response;
 
 import com.example.demo.enums.DecisionType;
@@ -16,7 +15,12 @@ public class VoteTopicResponse {
     DecisionType decisionType;
     Double requiredRatio;
     VoteStatus status;
-    String createdBy;
+
     Long ownershipId;
+    String ownershipVehicleName;
+
+    Long createdById;
+    String createdByName;
+
     LocalDateTime createdAt;
 }

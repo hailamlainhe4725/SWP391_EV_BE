@@ -44,7 +44,6 @@ public class Vote {
     Ownership ownership;
 
     Boolean choice; // true = đồng ý, false = không
-    Double weight; // tỉ lệ sở hữu
 
     LocalDateTime votedAt = LocalDateTime.now();
 }
