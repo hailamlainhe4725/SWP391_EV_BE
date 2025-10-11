@@ -43,7 +43,7 @@ public class VoteTopic {
     DecisionType decisionType; // MINOR, MEDIUM, MAJOR
 
     @ManyToOne
-    @JoinColumn(name = "created_by")
+    @JoinColumn(name = "user_id")
     User createdBy;
 
     @ManyToOne

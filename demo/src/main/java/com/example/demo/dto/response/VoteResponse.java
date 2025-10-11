@@ -1,18 +1,18 @@
+// dto/response/VoteResponse.java
 package com.example.demo.dto.response;
 
+import lombok.Builder;
+import lombok.Data;
 import java.time.LocalDateTime;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Builder
 public class VoteResponse {
-    private Long voteId;
-    private Long relatedId;
-    private Long userId;
-    private Boolean agree;
-    private LocalDateTime createdAt;
+    Long voteId;
+    Long topicId;
+    String topicTitle;
+    String userName;
+    Boolean choice;
+    Double weight;
+    LocalDateTime votedAt;
 }
