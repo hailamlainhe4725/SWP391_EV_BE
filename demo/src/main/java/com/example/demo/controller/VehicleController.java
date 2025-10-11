@@ -1,0 +1,48 @@
+package com.example.demo.controller;
+
+import com.example.demo.dto.request.*;
+import com.example.demo.dto.response.*;
+import com.example.demo.service.VehicleService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/vehicles")
+@RequiredArgsConstructor
+public class VehicleController {
+
+    private final VehicleService vehicleService;
+
+    @GetMapping
+    public ResponseEntity<List<VehicleResponse>> getAll() {
+        return ResponseEntity.ok(vehicleService.getAll());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<VehicleResponse> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(vehicleService.getById(id));
+    }
+
+    @PreAuthorize("hasRole('STAFF')")
+    @PostMapping
+    public ResponseEntity<VehicleResponse> create(@Valid @RequestBody CreateVehicleRequest req) {
+        return ResponseEntity.ok(vehicleService.create(req));
+    }
+
+    @PreAuthorize("hasRole('STAFF')")
+    @PutMapping("/{id}")
+    public ResponseEntity<VehicleResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateVehicleRequest req) {
+        return ResponseEntity.ok(vehicleService.update(id, req));
+    }
+
+    @PreAuthorize("hasRole('STAFF')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        vehicleService.softDelete(id);
+        return ResponseEntity.noContent().build();
+    }
+}
