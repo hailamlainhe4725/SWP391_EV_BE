@@ -1,5 +1,7 @@
 package com.example.demo.dto.request;
 
+import com.example.demo.enums.VehicleStatus;
+
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -20,4 +22,5 @@ public class CreateVehicleRequest {
     Double operatingCostPerKm;
     String description;
     String imageUrl;
+    VehicleStatus vehicleStatus;
 }

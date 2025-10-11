@@ -1,29 +1,38 @@
 package com.example.demo.entity;
 
+import com.example.demo.enums.OwnerContractStatus;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import java.time.LocalDate;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import java.time.LocalDateTime;
 
-@Entity
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "owner_contract")
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class OwnerContract {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    Long ownerContractId;
 
-    private String ownerName;
-    private LocalDate startDate;
-    private LocalDate endDate;
-    private boolean deleted = false;
+    @ManyToOne
+    @JoinColumn(name = "contract_id", nullable = false)
+    Contract contract;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user; // Ai là người sở hữu
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    User user; // người mua cổ phần (co-owner)
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "vehicle_id")
-    private Vehicle vehicle;
+    // % cổ phần mua (VD: 20%)
+    Double sharePercentage;
+
+    @Enumerated(EnumType.STRING)
+    OwnerContractStatus status = OwnerContractStatus.ACTIVE;
+
+    LocalDateTime createdAt = LocalDateTime.now();
 }

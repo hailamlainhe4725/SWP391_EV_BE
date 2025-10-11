@@ -1,8 +1,11 @@
 package com.example.demo.entity;
 
+import com.example.demo.enums.ContractStatus;
+
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import com.example.demo.enums.UserRole;
 
 @Entity
 @Table(name = "`user`")
@@ -33,12 +36,9 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    Role role = Role.USER;
+    UserRole role = UserRole.USER;
 
     @Column(name = "deleted")
     Boolean deleted = false; // soft delete flag
 
-    public enum Role {
-        USER, STAFF;
-    }
 }

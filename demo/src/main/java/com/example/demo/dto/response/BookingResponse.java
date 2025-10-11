@@ -2,6 +2,8 @@ package com.example.demo.dto.response;
 
 import java.time.LocalDateTime;
 
+import com.example.demo.enums.BookingStatus;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,5 +21,5 @@ public class BookingResponse {
     private String vehicleModel;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private String status;
+    private BookingStatus bookingStatus;
 }

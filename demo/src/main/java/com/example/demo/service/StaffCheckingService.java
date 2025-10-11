@@ -52,10 +52,10 @@ public class StaffCheckingService {
                 Double distanceTraveled = null;
                 Double batteryUsedPercent = null;
 
-                if (req.getCheckType().equalsIgnoreCase("CheckIn")) {
+                if (req.getStaffCheckingType().toString().equalsIgnoreCase("CheckIn")) {
                         // Lấy CheckOut đầu tiên của cùng booking (nếu có)
                         StaffChecking checkout = staffCheckingRepository.findByBookingAndDeletedFalse(booking).stream()
-                                        .filter(sc -> "CheckOut".equalsIgnoreCase(sc.getCheckType()))
+                                        .filter(sc -> sc.getType().toString().equalsIgnoreCase("CheckOut"))
                                         .findFirst().orElse(null);
 
                         if (checkout != null && req.getOdometer() != null && checkout.getOdometer() != null) {
@@ -73,7 +73,7 @@ public class StaffCheckingService {
                                 .user(user)
                                 .staff(staff)
                                 .booking(booking)
-                                .checkType(req.getCheckType())
+                                .type(req.getStaffCheckingType())
                                 .odometer(req.getOdometer())
                                 .batteryPercent(req.getBatteryPercent())
                                 .damageReported(req.getDamageReported())
@@ -106,7 +106,7 @@ public class StaffCheckingService {
                                 .staffId(sc.getStaff().getId())
                                 .staffName(sc.getStaff().getFullName())
                                 .bookingId(sc.getBooking().getBookingId())
-                                .checkType(sc.getCheckType())
+                                .checkingType(sc.getType())
                                 .checkTime(sc.getCheckTime())
                                 .odometer(sc.getOdometer())
                                 .batteryPercent(sc.getBatteryPercent())

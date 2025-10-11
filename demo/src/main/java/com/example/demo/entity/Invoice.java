@@ -6,6 +6,8 @@ import lombok.experimental.FieldDefaults;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.example.demo.enums.BillingStatus;
+
 @Getter
 @Setter
 @Builder
@@ -29,7 +31,8 @@ public class Invoice {
 
     String invoiceMonth;
     Double totalAmount;
-    String status;
+    @Enumerated(EnumType.STRING)
+    BillingStatus status = BillingStatus.OPEN;
     LocalDateTime issuedDate;
     LocalDateTime dueDate;
     String note;

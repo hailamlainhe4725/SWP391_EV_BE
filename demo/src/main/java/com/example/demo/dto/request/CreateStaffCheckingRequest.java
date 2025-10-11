@@ -1,5 +1,7 @@
 package com.example.demo.dto.request;
 
+import com.example.demo.enums.StaffCheckingType;
+
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -14,7 +16,7 @@ public class CreateStaffCheckingRequest {
     Long userId;
     Long staffId;
     Long bookingId;
-    String checkType; // CheckIn, CheckOut
+    StaffCheckingType staffCheckingType;
     Double odometer;
     Double batteryPercent;
     Boolean damageReported;

@@ -1,5 +1,7 @@
 package com.example.demo.entity;
 
+import com.example.demo.enums.VehicleStatus;
+
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -31,7 +33,8 @@ public class Vehicle {
 
     @Column(nullable = false)
     @Builder.Default
-    String status = "Available";
+    @Enumerated(EnumType.STRING)
+    VehicleStatus status = VehicleStatus.Available; // AVAILABLE, RENTED, MAINTENANCE
 
     @Builder.Default
     Boolean deleted = false;

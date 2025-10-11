@@ -1,16 +1,18 @@
 package com.example.demo.entity;
 
+import com.example.demo.enums.OwnershipStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "ownership")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Entity
+@Table(name = "ownership")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Ownership {
 
@@ -26,12 +28,10 @@ public class Ownership {
     @JoinColumn(name = "vehicle_id", nullable = false)
     Vehicle vehicle;
 
-    @Column(nullable = false)
-    Double totalSharePercentage;
+    Double totalSharePercentage = 0.0;
 
-    @Column(nullable = false)
-    String status; // Active, Transferred
+    @Enumerated(EnumType.STRING)
+    OwnershipStatus status = OwnershipStatus.ACTIVE;
 
-    @Builder.Default
-    Boolean deleted = false;
+    LocalDateTime createdAt = LocalDateTime.now();
 }

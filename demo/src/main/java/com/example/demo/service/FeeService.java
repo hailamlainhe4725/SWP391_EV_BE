@@ -1,15 +1,9 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.response.FeeResponse;
-import com.example.demo.entity.FixedFee;
-import com.example.demo.entity.User;
-import com.example.demo.entity.VariableFee;
-import com.example.demo.entity.Vehicle;
+import com.example.demo.entity.*;
 import com.example.demo.exception.ResourceNotFoundException;
-import com.example.demo.repository.FixedFeeRepository;
-import com.example.demo.repository.VariableFeeRepository;
-import com.example.demo.repository.VehicleRepository;
-
+import com.example.demo.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -40,12 +34,11 @@ public class FeeService {
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
 
         fee.setVehicle(vehicle);
-
         if (userId != null) {
-            fee.setUser(User.builder().id(userId).build()); // set user theo id
+            fee.setUser(User.builder().id(userId).build());
         }
-
         fee.setDeleted(false);
+
         VariableFee saved = variableFeeRepository.save(fee);
         return mapFeeToResponse(saved);
     }
@@ -54,10 +47,9 @@ public class FeeService {
         VariableFee fee = variableFeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Variable fee not found"));
 
-        fee.setFeeType(updatedFee.getFeeType());
+        fee.setType(updatedFee.getType());
         fee.setAmount(updatedFee.getAmount());
         fee.setDescription(updatedFee.getDescription());
-
         return variableFeeRepository.save(fee);
     }
 
@@ -92,10 +84,9 @@ public class FeeService {
         FixedFee fee = fixedFeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fixed fee not found"));
 
-        fee.setFeeType(updatedFee.getFeeType());
+        fee.setType(updatedFee.getType());
         fee.setBaseAmount(updatedFee.getBaseAmount());
         fee.setDescription(updatedFee.getDescription());
-
         return fixedFeeRepository.save(fee);
     }
 
@@ -108,28 +99,29 @@ public class FeeService {
 
     // ========================= MAPPER (Unified) =========================
     private FeeResponse mapFeeToResponse(Object f) {
-        if (f instanceof VariableFee) {
-            VariableFee vf = (VariableFee) f;
+        if (f instanceof VariableFee vf) {
             return FeeResponse.builder()
                     .feeId(vf.getVariableFeeId())
                     .vehicleId(vf.getVehicle().getVehicleId())
-                    .feeType(vf.getFeeType())
+                    .userId(vf.getUser() != null ? vf.getUser().getId() : null)
+                    .variableFeeType(vf.getType())
                     .amount(vf.getAmount())
                     .description(vf.getDescription())
                     .createdAt(vf.getCreatedAt())
                     .sourceType("Variable")
                     .build();
-        } else if (f instanceof FixedFee) {
-            FixedFee ff = (FixedFee) f;
+
+        } else if (f instanceof FixedFee ff) {
             return FeeResponse.builder()
                     .feeId(ff.getFixedFeeId())
                     .vehicleId(ff.getVehicle().getVehicleId())
-                    .feeType(ff.getFeeType())
+                    .fixedFeeType(ff.getType())
                     .amount(ff.getBaseAmount())
                     .description(ff.getDescription())
                     .createdAt(ff.getCreatedAt())
                     .sourceType("Fixed")
                     .build();
+
         } else {
             throw new IllegalArgumentException("Unsupported fee type for mapping");
         }

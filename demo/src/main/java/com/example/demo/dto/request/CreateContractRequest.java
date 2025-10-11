@@ -5,8 +5,9 @@ import java.time.LocalDate;
 
 @Data
 public class CreateContractRequest {
-    private String description;
+    private Long vehicleId;
+    private Long userId; // chủ xe (owner)
+    private Double salePercentage;
     private LocalDate startDate;
     private LocalDate endDate;
-    private Long userId; // Ai là người ký hợp đồng
 }

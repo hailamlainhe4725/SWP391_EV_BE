@@ -43,7 +43,7 @@ public class VehicleService {
                 .operatingCostPerKm(req.getOperatingCostPerKm())
                 .description(req.getDescription())
                 .imageUrl(req.getImageUrl())
-                .status("Available")
+                .status(req.getVehicleStatus())
                 .build();
         vehicleRepository.save(v);
         return mapToResponse(v);

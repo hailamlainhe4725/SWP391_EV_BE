@@ -6,6 +6,8 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 
+import com.example.demo.enums.BookingStatus;
+
 @Entity
 @Table(name = "booking")
 @Getter
@@ -36,8 +38,9 @@ public class Booking {
 
     @Column(nullable = false)
     @Builder.Default
-    String status = "Pending"; // Pending, Confirmed, Completed, Cancelled
 
+    @Enumerated(EnumType.STRING)
+    BookingStatus bookingStatus = BookingStatus.Pending; // PENDING, CONFIRMED, CANCELLED, COMPLETED
     @Builder.Default
     Boolean deleted = false;
 }

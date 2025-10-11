@@ -5,6 +5,8 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import java.time.LocalDateTime;
 
+import com.example.demo.enums.VariableFeeType;
+
 @Getter
 @Setter
 @Builder
@@ -34,7 +36,8 @@ public class VariableFee {
     @JoinColumn(name = "checking_id")
     StaffChecking staffChecking;
 
-    String feeType; // Charging, Overused, OverOdometer, Damage, Upgrade
+    @Enumerated(EnumType.STRING)
+    VariableFeeType type; // EXTRA_MILEAGE, DAMAGE_FEE, LATE_RETURN, CLEANING_FEE
     Double amount;
     String description;
 

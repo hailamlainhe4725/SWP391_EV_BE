@@ -1,5 +1,7 @@
 package com.example.demo.dto.response;
 
+import com.example.demo.enums.VehicleStatus;
+
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -21,5 +23,5 @@ public class VehicleResponse {
     Double operatingCostPerKm;
     String description;
     String imageUrl;
-    String status;
+    VehicleStatus status;
 }

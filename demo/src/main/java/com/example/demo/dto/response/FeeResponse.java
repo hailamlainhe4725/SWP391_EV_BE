@@ -1,7 +1,10 @@
 package com.example.demo.dto.response;
 
+import com.example.demo.enums.FixFeeType;
+import com.example.demo.enums.VariableFeeType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
 import java.time.LocalDateTime;
 
 @Getter
@@ -12,8 +15,11 @@ import java.time.LocalDateTime;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class FeeResponse {
     Long feeId;
-    String feeType;
     String sourceType; // "Variable" or "Fixed"
+
+    VariableFeeType variableFeeType;
+    FixFeeType fixedFeeType;
+
     Long vehicleId;
     Long userId;
     Double amount;

@@ -6,6 +6,8 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 
+import com.example.demo.enums.StaffCheckingType;
+
 @Entity
 @Table(name = "staff_checking")
 @Getter
@@ -29,7 +31,7 @@ public class StaffChecking {
     User user;
 
     @ManyToOne
-    @JoinColumn(name = "staff_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     User staff;
 
     @ManyToOne
@@ -37,7 +39,8 @@ public class StaffChecking {
     Booking booking;
 
     @Column(nullable = false)
-    String checkType; // CheckIn, CheckOut
+    @Enumerated(EnumType.STRING)
+    StaffCheckingType type; // CHECK_IN, CHECK_OUT
 
     @Column(nullable = false)
     @Builder.Default

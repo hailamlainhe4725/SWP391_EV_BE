@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface OwnerContractRepository extends JpaRepository<OwnerContract, Long> {
     List<OwnerContract> findByDeletedFalse();
+
+    List<OwnerContract> findByContract_ContractId(Long contractId);
 }

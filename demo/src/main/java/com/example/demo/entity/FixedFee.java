@@ -5,6 +5,8 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import java.time.LocalDateTime;
 
+import com.example.demo.enums.FixFeeType;
+
 @Getter
 @Setter
 @Builder
@@ -22,7 +24,8 @@ public class FixedFee {
     @JoinColumn(name = "vehicle_id", nullable = false)
     Vehicle vehicle;
 
-    String feeType; // Maintenance, Insurance, Registration, Cleaning
+    @Enumerated(EnumType.STRING)
+    FixFeeType type;
     Double baseAmount;
     String frequency; // Monthly, Quarterly, Yearly
     LocalDateTime lastApplied;

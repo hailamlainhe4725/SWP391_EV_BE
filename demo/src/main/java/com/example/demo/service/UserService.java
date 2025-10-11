@@ -6,6 +6,7 @@ import com.example.demo.dto.request.AuthRequest;
 import com.example.demo.dto.response.AuthResponse;
 import com.example.demo.dto.response.UserResponse;
 import com.example.demo.entity.User;
+import com.example.demo.enums.UserRole;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -56,7 +57,7 @@ public class UserService {
         String roleStr = (req.getRole() == null || req.getRole().isEmpty()) ? "USER" : req.getRole().toUpperCase();
 
         try {
-            user.setRole(User.Role.valueOf(roleStr)); // convert String -> Enum
+            user.setRole(UserRole.valueOf(roleStr)); // convert String -> Enum
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("Invalid role: " + req.getRole());
         }

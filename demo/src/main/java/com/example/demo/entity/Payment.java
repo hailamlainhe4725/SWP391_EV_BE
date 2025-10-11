@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import java.time.LocalDateTime;
+import com.example.demo.enums.TransactionStatus;
 
 @Getter
 @Setter
@@ -25,5 +26,6 @@ public class Payment {
     Double paidAmount;
     LocalDateTime paymentDate;
     String method;
-    String status;
+    @Enumerated(EnumType.STRING)
+    TransactionStatus status = TransactionStatus.INITIATED;
 }

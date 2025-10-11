@@ -4,6 +4,8 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import java.time.LocalDateTime;
 
+import com.example.demo.enums.TransactionStatus;
+
 @Getter
 @Setter
 @Builder
@@ -15,6 +17,6 @@ public class PaymentResponse {
     Long invoiceId;
     Double amount;
     String method;
-    String status;
+    TransactionStatus status;
     LocalDateTime paymentDate;
 }

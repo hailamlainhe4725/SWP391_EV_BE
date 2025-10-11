@@ -15,4 +15,8 @@ public interface OwnershipRepository extends JpaRepository<Ownership, Long> {
 
     // helper: find by id and not deleted
     Optional<Ownership> findByOwnershipIdAndDeletedFalse(Long ownershipId);
+
+    Optional<Ownership> findByUser_UserIdAndVehicle_VehicleId(Long userId, Long vehicleId);
+
+    List<Ownership> findByUser_Email(String email);
 }

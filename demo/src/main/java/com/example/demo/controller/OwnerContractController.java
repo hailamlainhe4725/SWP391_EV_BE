@@ -27,18 +27,4 @@ public class OwnerContractController {
     public ResponseEntity<OwnerContractResponse> create(@RequestBody CreateOwnerContractRequest req) {
         return ResponseEntity.ok(ownerContractService.create(req));
     }
-
-    @PreAuthorize("hasRole('STAFF')")
-    @PutMapping("/{id}")
-    public ResponseEntity<OwnerContractResponse> update(@PathVariable Long id,
-            @RequestBody CreateOwnerContractRequest req) {
-        return ResponseEntity.ok(ownerContractService.update(id, req));
-    }
-
-    @PreAuthorize("hasRole('STAFF')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        ownerContractService.softDelete(id);
-        return ResponseEntity.noContent().build();
-    }
 }

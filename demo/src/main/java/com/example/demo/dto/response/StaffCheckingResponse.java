@@ -5,6 +5,8 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 
+import com.example.demo.enums.StaffCheckingType;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,7 +22,7 @@ public class StaffCheckingResponse {
     Long staffId;
     String staffName;
     Long bookingId;
-    String checkType;
+    StaffCheckingType checkingType;
     LocalDateTime checkTime;
     Double odometer;
     Double batteryPercent;

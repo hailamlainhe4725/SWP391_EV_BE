@@ -4,8 +4,11 @@ import com.example.demo.dto.request.CreateContractRequest;
 import com.example.demo.dto.response.ContractResponse;
 import com.example.demo.entity.Contract;
 import com.example.demo.entity.User;
+import com.example.demo.entity.Vehicle;
+import com.example.demo.enums.ContractStatus;
 import com.example.demo.repository.ContractRepository;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,63 +21,64 @@ public class ContractService {
 
     private final ContractRepository contractRepository;
     private final UserRepository userRepository;
+    private final VehicleRepository vehicleRepository;
 
-    public List<ContractResponse> getByUserEmail(String email) {
-        return contractRepository.findByUser_EmailAndDeletedFalse(email)
-                .stream()
-                .map(this::toResponse)
+    public List<ContractResponse> getAll() {
+        return contractRepository.findAll().stream()
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
-    public ContractResponse create(CreateContractRequest req) {
-        Contract contract = new Contract();
-        contract.setDescription(req.getDescription());
-        contract.setStartDate(req.getStartDate());
-        contract.setEndDate(req.getEndDate());
-        contract.setDeleted(false);
-
-        if (req.getUserId() != null) {
-            User user = userRepository.findById(req.getUserId())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-            contract.setUser(user);
-        }
-
-        contractRepository.save(contract);
-        return toResponse(contract);
+    public ContractResponse getById(Long id) {
+        return contractRepository.findById(id)
+                .map(this::mapToResponse)
+                .orElseThrow(() -> new RuntimeException("Contract not found"));
     }
 
-    public ContractResponse update(Long id, CreateContractRequest req) {
-        Contract contract = contractRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Contract not found"));
+    public ContractResponse create(CreateContractRequest req) {
+        User user = userRepository.findById(req.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
+                .orElseThrow(() -> new RuntimeException("Vehicle not found"));
 
-        contract.setDescription(req.getDescription());
-        contract.setStartDate(req.getStartDate());
-        contract.setEndDate(req.getEndDate());
-
-        if (req.getUserId() != null) {
-            User user = userRepository.findById(req.getUserId())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-            contract.setUser(user);
-        }
+        Contract contract = Contract.builder()
+                .user(user)
+                .vehicle(vehicle)
+                .salePercentage(req.getSalePercentage())
+                .startDate(req.getStartDate())
+                .endDate(req.getEndDate())
+                .status(ContractStatus.PENDING)
+                .build();
 
         contractRepository.save(contract);
-        return toResponse(contract);
+        return mapToResponse(contract);
+    }
+
+    public ContractResponse updateStatus(Long id, ContractStatus status) {
+        Contract c = contractRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Contract not found"));
+        c.setStatus(status);
+        contractRepository.save(c);
+        return mapToResponse(c);
     }
 
     public void softDelete(Long id) {
-        Contract contract = contractRepository.findById(id)
+        Contract c = contractRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Contract not found"));
-        contract.setDeleted(true);
-        contractRepository.save(contract);
+        c.setStatus(ContractStatus.EXPIRED);
+        contractRepository.save(c);
     }
 
-    private ContractResponse toResponse(Contract c) {
-        ContractResponse res = new ContractResponse();
-        res.setId(c.getContractId());
-        res.setDescription(c.getDescription());
-        res.setStartDate(c.getStartDate());
-        res.setEndDate(c.getEndDate());
-        res.setUserEmail(c.getUser() != null ? c.getUser().getEmail() : null);
-        return res;
+    private ContractResponse mapToResponse(Contract c) {
+        return ContractResponse.builder()
+                .contractId(c.getContractId())
+                .ownerName(c.getUser().getFullName())
+                .vehicleName(c.getVehicle().getBrand() + " " + c.getVehicle().getModel())
+                .salePercentage(c.getSalePercentage())
+                .status(c.getStatus().name())
+                .startDate(c.getStartDate())
+                .endDate(c.getEndDate())
+                .createdAt(c.getCreatedAt())
+                .build();
     }
 }

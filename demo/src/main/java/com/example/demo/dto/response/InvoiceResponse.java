@@ -5,6 +5,8 @@ import lombok.experimental.FieldDefaults;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.example.demo.enums.BillingStatus;
+
 @Getter
 @Setter
 @Builder
@@ -15,7 +17,7 @@ public class InvoiceResponse {
     Long invoiceId;
     Long userId;
     Long vehicleId;
-    String status;
+    BillingStatus status;
     Double totalAmount;
     LocalDateTime issuedDate;
     LocalDateTime dueDate;
