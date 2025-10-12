@@ -42,7 +42,8 @@ public class Ownership {
     Double usedDaysThisMonth; // Số ngày đã dùng trong tháng
 
     @Builder.Default
-    Boolean deleted = false;
+    @Column(name = "deleted")
+    boolean deleted = false;
 
     // === Getter tiện ích ===
     public boolean isOverKmLimit() {

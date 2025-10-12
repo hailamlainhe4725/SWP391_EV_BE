@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import com.example.demo.enums.DecisionType;
 import com.example.demo.enums.VoteStatus;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -56,4 +57,6 @@ public class VoteTopic {
     VoteStatus status; // PENDING, APPROVED, REJECTED, EXPIRED
 
     LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "deleted")
+    boolean deleted = false;
 }

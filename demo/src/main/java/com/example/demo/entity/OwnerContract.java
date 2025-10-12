@@ -35,4 +35,7 @@ public class OwnerContract {
     OwnerContractStatus status = OwnerContractStatus.ACTIVE;
 
     LocalDateTime createdAt = LocalDateTime.now();
+    @Builder.Default
+    @Column(nullable = false)
+    Boolean deleted = false;
 }

@@ -29,5 +29,6 @@ public class InvoiceDetail {
     Double amount;
     LocalDateTime createdAt;
 
+    @Column(name = "deleted")
     boolean deleted = false;
 }

@@ -20,7 +20,7 @@ public class VehicleService {
 
     public List<VehicleResponse> getAll() {
         return vehicleRepository.findAll().stream()
-                .filter(v -> !Boolean.TRUE.equals(v.getDeleted()))
+                .filter(v -> !Boolean.TRUE.equals(v.isDeleted()))
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -38,7 +38,7 @@ public class VehicleService {
                 .plateNumber(req.getPlateNumber())
                 .color(req.getColor())
                 .year(req.getYear())
-                .batteryCapacityKWh(req.getBatteryCapacityKWh())
+                .batteryCapacityKwh(req.getBatteryCapacityKwh())
                 .operatingCostPerDay(req.getOperatingCostPerDay())
                 .operatingCostPerKm(req.getOperatingCostPerKm())
                 .description(req.getDescription())
@@ -89,7 +89,7 @@ public class VehicleService {
                 .plateNumber(v.getPlateNumber())
                 .color(v.getColor())
                 .year(v.getYear())
-                .batteryCapacityKWh(v.getBatteryCapacityKWh())
+                .batteryCapacityKwh(v.getBatteryCapacityKwh())
                 .operatingCostPerDay(v.getOperatingCostPerDay())
                 .operatingCostPerKm(v.getOperatingCostPerKm())
                 .description(v.getDescription())

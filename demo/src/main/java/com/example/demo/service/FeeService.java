@@ -25,85 +25,85 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FeeService {
 
-    private final VariableFeeRepository variableFeeRepository;
-    private final FixedFeeRepository fixedFeeRepository;
-    private final VehicleRepository vehicleRepository;
-    private final UserRepository userRepository;
+        private final VariableFeeRepository variableFeeRepository;
+        private final FixedFeeRepository fixedFeeRepository;
+        private final VehicleRepository vehicleRepository;
+        private final UserRepository userRepository;
 
-    // ================= VARIABLE FEE =================
-    public FeeResponse createVariableFee(CreateVariableFeeRequest req) {
-        Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+        // ================= VARIABLE FEE =================
+        public FeeResponse createVariableFee(CreateVariableFeeRequest req) {
+                Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
+                                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
 
-        User user = userRepository.findById(req.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                User user = userRepository.findById(req.getUserId())
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        VariableFee fee = VariableFee.builder()
-                .vehicle(vehicle)
-                .user(user)
-                .type(req.getType())
-                .amount(req.getAmount())
-                .description(req.getDescription())
-                .createdAt(LocalDateTime.now())
-                .deleted(false)
-                .build();
+                VariableFee fee = VariableFee.builder()
+                                .vehicle(vehicle)
+                                .user(user)
+                                .type(req.getType())
+                                .amount(req.getAmount())
+                                .description(req.getDescription())
+                                .createdAt(LocalDateTime.now())
+                                .deleted(false)
+                                .build();
 
-        variableFeeRepository.save(fee);
-        return mapFeeToResponse(fee);
-    }
-
-    public List<FeeResponse> getAllVariableFees() {
-        return variableFeeRepository.findByDeletedFalse()
-                .stream().map(this::mapFeeToResponse).collect(Collectors.toList());
-    }
-
-    // ================= FIXED FEE =================
-    public FeeResponse createFixedFee(CreateFixedFeeRequest req) {
-        Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
-
-        FixedFee fee = FixedFee.builder()
-                .vehicle(vehicle)
-                .type(req.getType())
-                .baseAmount(req.getBaseAmount())
-                .description(req.getDescription())
-                .createdAt(LocalDateTime.now())
-                .deleted(false)
-                .build();
-
-        fixedFeeRepository.save(fee);
-        return mapFeeToResponse(fee);
-    }
-
-    public List<FeeResponse> getAllFixedFees() {
-        return fixedFeeRepository.findByDeletedFalse()
-                .stream().map(this::mapFeeToResponse).collect(Collectors.toList());
-    }
-
-    // ================= MAPPER =================
-    private FeeResponse mapFeeToResponse(Object fee) {
-        if (fee instanceof VariableFee vf) {
-            return FeeResponse.builder()
-                    .feeId(vf.getVariableFeeId())
-                    .sourceType("Variable")
-                    .variableFeeType(vf.getType())
-                    .vehicleId(vf.getVehicle().getVehicleId())
-                    .userId(vf.getUser().getId())
-                    .amount(vf.getAmount())
-                    .description(vf.getDescription())
-                    .createdAt(vf.getCreatedAt())
-                    .build();
-        } else if (fee instanceof FixedFee ff) {
-            return FeeResponse.builder()
-                    .feeId(ff.getFixedFeeId())
-                    .sourceType("Fixed")
-                    .fixedFeeType(ff.getType())
-                    .vehicleId(ff.getVehicle().getVehicleId())
-                    .amount(ff.getBaseAmount())
-                    .description(ff.getDescription())
-                    .createdAt(ff.getCreatedAt())
-                    .build();
+                variableFeeRepository.save(fee);
+                return mapFeeToResponse(fee);
         }
-        throw new IllegalArgumentException("Unsupported fee type");
-    }
+
+        public List<FeeResponse> getAllVariableFees() {
+                return variableFeeRepository.findByDeletedFalse()
+                                .stream().map(this::mapFeeToResponse).collect(Collectors.toList());
+        }
+
+        // ================= FIXED FEE =================
+        public FeeResponse createFixedFee(CreateFixedFeeRequest req) {
+                Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
+                                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+
+                FixedFee fee = FixedFee.builder()
+                                .vehicle(vehicle)
+                                .type(req.getType())
+                                .baseAmount(req.getBaseAmount())
+                                .description(req.getDescription())
+                                .createdAt(LocalDateTime.now())
+                                .deleted(false)
+                                .build();
+
+                fixedFeeRepository.save(fee);
+                return mapFeeToResponse(fee);
+        }
+
+        public List<FeeResponse> getAllFixedFees() {
+                return fixedFeeRepository.findByDeletedFalse()
+                                .stream().map(this::mapFeeToResponse).collect(Collectors.toList());
+        }
+
+        // ================= MAPPER =================
+        private FeeResponse mapFeeToResponse(Object fee) {
+                if (fee instanceof VariableFee vf) {
+                        return FeeResponse.builder()
+                                        .feeId(vf.getVariableFeeId())
+                                        .sourceType("Variable")
+                                        .variableFeeType(vf.getType())
+                                        .vehicleId(vf.getVehicle().getVehicleId())
+                                        .userId(vf.getUser().getId())
+                                        .amount(vf.getAmount())
+                                        .description(vf.getDescription())
+                                        .createdAt(vf.getCreatedAt())
+                                        .build();
+                } else if (fee instanceof FixedFee ff) {
+                        return FeeResponse.builder()
+                                        .feeId(ff.getFixedFeeId())
+                                        .sourceType("Fixed")
+                                        .fixedFeeType(ff.getType())
+                                        .vehicleId(ff.getVehicle().getVehicleId())
+                                        .amount(ff.getBaseAmount())
+                                        .description(ff.getDescription())
+                                        .createdAt(ff.getCreatedAt())
+                                        .build();
+                }
+                throw new IllegalArgumentException("Unsupported fee type");
+        }
 }

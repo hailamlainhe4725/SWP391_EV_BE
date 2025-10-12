@@ -46,5 +46,6 @@ public class VariableFee {
     User recordedBy;
 
     LocalDateTime createdAt;
+    @Column(name = "deleted")
     boolean deleted = false;
 }

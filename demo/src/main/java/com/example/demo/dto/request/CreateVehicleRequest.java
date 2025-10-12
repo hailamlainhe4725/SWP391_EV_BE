@@ -17,7 +17,7 @@ public class CreateVehicleRequest {
     String plateNumber;
     String color;
     Integer year;
-    Double batteryCapacityKWh;
+    Double batteryCapacityKwh;
     Double operatingCostPerDay;
     Double operatingCostPerKm;
     String description;

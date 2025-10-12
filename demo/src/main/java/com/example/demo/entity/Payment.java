@@ -28,4 +28,6 @@ public class Payment {
     String method;
     @Enumerated(EnumType.STRING)
     TransactionStatus status = TransactionStatus.INITIATED;
+    @Column(name = "deleted")
+    boolean deleted = false;
 }

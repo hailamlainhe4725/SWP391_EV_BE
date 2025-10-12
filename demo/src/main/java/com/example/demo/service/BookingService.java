@@ -31,7 +31,7 @@ public class BookingService {
                                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
 
                 Ownership ownership = ownershipRepository
-                                .findByUser_UserIdAndVehicle_VehicleId(user.getId(), vehicle.getVehicleId())
+                                .findByUser_IdAndVehicle_VehicleId(user.getId(), vehicle.getVehicleId())
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "You are not a co-owner of this vehicle"));
 

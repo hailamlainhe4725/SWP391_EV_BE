@@ -43,4 +43,7 @@ public class Contract {
     ContractStatus status = ContractStatus.PENDING;
 
     LocalDateTime createdAt = LocalDateTime.now();
+    @Column(nullable = false)
+    @Builder.Default
+    Boolean deleted = false;
 }

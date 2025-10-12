@@ -40,5 +40,6 @@ public class Invoice {
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     List<InvoiceDetail> details;
 
-    boolean deleted = false; // soft delete
+    @Column(name = "deleted")
+    boolean deleted = false;
 }

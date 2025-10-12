@@ -32,5 +32,6 @@ public class FixedFee {
     String description;
 
     LocalDateTime createdAt;
+    @Column(name = "deleted")
     boolean deleted = false;
 }

@@ -54,7 +54,7 @@ public class StaffCheckingService {
                 Booking booking = bookingRepository.findById(req.getBookingId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
                 Ownership ownership = ownershipRepository
-                                .findByUser_UserIdAndVehicle_VehicleId(user.getId(), vehicle.getVehicleId())
+                                .findByUser_IdAndVehicle_VehicleId(user.getId(), vehicle.getVehicleId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Ownership not found"));
 
                 StaffCheckingType type = req.getStaffCheckingType();
@@ -105,7 +105,7 @@ public class StaffCheckingService {
 
                         // --- Cập nhật ownership ---
                         ownership = ownershipRepository
-                                        .findByUser_UserIdAndVehicle_VehicleId(user.getId(), vehicle.getVehicleId())
+                                        .findByUser_IdAndVehicle_VehicleId(user.getId(), vehicle.getVehicleId())
                                         .orElseThrow(() -> new ResourceNotFoundException("Ownership not found"));
 
                         if (distanceTraveled != null) {
@@ -163,7 +163,7 @@ public class StaffCheckingService {
                                         .user(user)
                                         .booking(booking)
                                         .type(VariableFeeType.Charging)
-                                        .amount((batteryUsed / 100) * vehicle.getBatteryCapacityKWh() * 2500) // ví dụ:
+                                        .amount((batteryUsed / 100) * vehicle.getBatteryCapacityKwh() * 2500) // ví dụ:
                                                                                                               // VND
                                         .description("Vehicle battery recharge after trip (100%)")
                                         .createdAt(LocalDateTime.now())

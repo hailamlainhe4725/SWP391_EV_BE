@@ -25,7 +25,7 @@ public class Vehicle {
     String plateNumber;
     String color;
     Integer year;
-    Double batteryCapacityKWh;
+    Double batteryCapacityKwh;
     Double operatingCostPerDay;
     Double operatingCostPerKm;
     String description;
@@ -37,5 +37,6 @@ public class Vehicle {
     VehicleStatus status = VehicleStatus.Available; // AVAILABLE, RENTED, MAINTENANCE
 
     @Builder.Default
-    Boolean deleted = false;
+    @Column(name = "deleted")
+    boolean deleted = false;
 }

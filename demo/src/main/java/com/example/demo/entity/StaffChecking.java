@@ -31,7 +31,7 @@ public class StaffChecking {
     User user;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "staff_id", nullable = false)
     User staff;
 
     @ManyToOne
@@ -55,5 +55,6 @@ public class StaffChecking {
     Double batteryUsedPercent; // hệ thống tính toán
 
     @Builder.Default
-    Boolean deleted = false;
+    @Column(name = "deleted")
+    boolean deleted = false;
 }
