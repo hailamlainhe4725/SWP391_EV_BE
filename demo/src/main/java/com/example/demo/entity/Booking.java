@@ -36,11 +36,15 @@ public class Booking {
     @Column(nullable = false)
     LocalDateTime endTime;
 
+    LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "priority_score")
+    Double priorityScore;
     @Column(nullable = false)
     @Builder.Default
 
     @Enumerated(EnumType.STRING)
     BookingStatus bookingStatus = BookingStatus.Pending; // PENDING, CONFIRMED, CANCELLED, COMPLETED
-    @Builder.Default
-    Boolean deleted = false;
+    @Column(name = "deleted")
+    boolean deleted = false;
 }

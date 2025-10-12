@@ -1,13 +1,16 @@
 package com.example.demo.dto.request;
 
-import java.time.LocalDateTime;
-
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import java.time.LocalDateTime;
 
 @Data
 public class CreateBookingRequest {
-    private Long userId;
-    private Long vehicleId;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
+    @NotNull
+    Long userId;
+    @NotNull
+    Long vehicleId;
+    @NotNull
+    LocalDateTime startTime;
+
 }
