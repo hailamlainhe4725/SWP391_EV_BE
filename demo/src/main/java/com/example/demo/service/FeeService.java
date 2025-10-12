@@ -3,9 +3,17 @@ package com.example.demo.service;
 import com.example.demo.dto.request.CreateFixedFeeRequest;
 import com.example.demo.dto.request.CreateVariableFeeRequest;
 import com.example.demo.dto.response.FeeResponse;
-import com.example.demo.entity.*;
+import com.example.demo.entity.FixedFee;
+import com.example.demo.entity.User;
+import com.example.demo.entity.VariableFee;
+import com.example.demo.entity.Vehicle;
+import com.example.demo.enums.FixFeeType;
+import com.example.demo.enums.VariableFeeType;
 import com.example.demo.exception.ResourceNotFoundException;
-import com.example.demo.repository.*;
+import com.example.demo.repository.FixedFeeRepository;
+import com.example.demo.repository.UserRepository;
+import com.example.demo.repository.VariableFeeRepository;
+import com.example.demo.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,19 +24,21 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class FeeService {
+
     private final VariableFeeRepository variableFeeRepository;
     private final FixedFeeRepository fixedFeeRepository;
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
 
-    // === VARIABLE ===
+    // ================= VARIABLE FEE =================
     public FeeResponse createVariableFee(CreateVariableFeeRequest req) {
         Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+
         User user = userRepository.findById(req.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        VariableFee vf = VariableFee.builder()
+        VariableFee fee = VariableFee.builder()
                 .vehicle(vehicle)
                 .user(user)
                 .type(req.getType())
@@ -38,31 +48,40 @@ public class FeeService {
                 .deleted(false)
                 .build();
 
-        variableFeeRepository.save(vf);
-        return mapToResponse(vf);
+        variableFeeRepository.save(fee);
+        return mapFeeToResponse(fee);
     }
 
-    // === FIXED ===
+    public List<FeeResponse> getAllVariableFees() {
+        return variableFeeRepository.findByDeletedFalse()
+                .stream().map(this::mapFeeToResponse).collect(Collectors.toList());
+    }
+
+    // ================= FIXED FEE =================
     public FeeResponse createFixedFee(CreateFixedFeeRequest req) {
         Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
 
-        FixedFee ff = FixedFee.builder()
+        FixedFee fee = FixedFee.builder()
                 .vehicle(vehicle)
                 .type(req.getType())
                 .baseAmount(req.getBaseAmount())
-                .frequency(req.getFrequency())
                 .description(req.getDescription())
                 .createdAt(LocalDateTime.now())
                 .deleted(false)
                 .build();
 
-        fixedFeeRepository.save(ff);
-        return mapToResponse(ff);
+        fixedFeeRepository.save(fee);
+        return mapFeeToResponse(fee);
     }
 
-    // === MAPPING ===
-    private FeeResponse mapToResponse(Object fee) {
+    public List<FeeResponse> getAllFixedFees() {
+        return fixedFeeRepository.findByDeletedFalse()
+                .stream().map(this::mapFeeToResponse).collect(Collectors.toList());
+    }
+
+    // ================= MAPPER =================
+    private FeeResponse mapFeeToResponse(Object fee) {
         if (fee instanceof VariableFee vf) {
             return FeeResponse.builder()
                     .feeId(vf.getVariableFeeId())
@@ -84,7 +103,7 @@ public class FeeService {
                     .description(ff.getDescription())
                     .createdAt(ff.getCreatedAt())
                     .build();
-        } else
-            throw new RuntimeException("Unsupported fee type");
+        }
+        throw new IllegalArgumentException("Unsupported fee type");
     }
 }

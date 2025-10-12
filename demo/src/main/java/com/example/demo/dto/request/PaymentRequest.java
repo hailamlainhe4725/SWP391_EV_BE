@@ -9,7 +9,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CreatePaymentRequest {
+public class PaymentRequest {
     Long invoiceId;
     Double paidAmount;
     String method;
