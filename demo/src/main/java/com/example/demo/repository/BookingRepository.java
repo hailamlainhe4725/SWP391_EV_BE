@@ -1,6 +1,9 @@
 package com.example.demo.repository;
 
 import com.example.demo.entity.Booking;
+import com.example.demo.entity.User;
+import com.example.demo.entity.Vehicle;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -37,4 +40,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                   AND b.deleted = false
             """)
     Double getUsedDaysThisMonth(Long userId, Long vehicleId);
+
+    List<Booking> findByUserAndVehicleAndStartTimeAfter(User user, Vehicle vehicle, LocalDateTime now);
+
 }

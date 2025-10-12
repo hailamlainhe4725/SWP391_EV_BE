@@ -35,6 +35,11 @@ public class BookingService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "You are not a co-owner of this vehicle"));
 
+                // Kiểm tra giới hạn km
+                if (ownership.isOverKmLimit()) {
+                        throw new RuntimeException(
+                                        "You have exceeded your monthly km limit for this vehicle. Booking blocked.");
+                }
                 // Giới hạn ngày sử dụng trong tháng
                 double usedDays = bookingRepository.getUsedDaysThisMonth(user.getId(), vehicle.getVehicleId());
                 double allowedDays = 30 * (ownership.getTotalSharePercentage() / 100.0);

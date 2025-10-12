@@ -1,5 +1,7 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.request.CreateFixedFeeRequest;
+import com.example.demo.dto.request.CreateVariableFeeRequest;
 import com.example.demo.dto.response.FeeResponse;
 import com.example.demo.entity.FixedFee;
 import com.example.demo.entity.VariableFee;
@@ -17,42 +19,15 @@ public class FeeController {
 
     private final FeeService feeService;
 
-    // ===== Variable Fees =====
-    @GetMapping("/variable/{vehicleId}")
-    public ResponseEntity<List<FeeResponse>> getVariableFees(@PathVariable Long vehicleId) {
-        return ResponseEntity.ok(feeService.getVariableFeesByVehicle(vehicleId));
+    @PreAuthorize("hasRole('STAFF')")
+    @PostMapping("/variable")
+    public ResponseEntity<FeeResponse> createVariable(@RequestBody CreateVariableFeeRequest req) {
+        return ResponseEntity.ok(feeService.createVariableFee(req));
     }
 
     @PreAuthorize("hasRole('STAFF')")
-    @PostMapping("/variable/{vehicleId}/{userId}")
-    public ResponseEntity<FeeResponse> createVariable(@PathVariable Long vehicleId, @PathVariable Long userId,
-            @RequestBody VariableFee fee) {
-        return ResponseEntity.ok(feeService.createVariableFee(vehicleId, userId, fee));
-    }
-
-    @PreAuthorize("hasRole('STAFF')")
-    @DeleteMapping("/variable/{id}")
-    public ResponseEntity<Void> deleteVariable(@PathVariable Long id) {
-        feeService.softDeleteVariableFee(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    // ===== Fixed Fees =====
-    @GetMapping("/fixed/{vehicleId}")
-    public ResponseEntity<List<FeeResponse>> getFixedFees(@PathVariable Long vehicleId) {
-        return ResponseEntity.ok(feeService.getFixedFeesByVehicle(vehicleId));
-    }
-
-    @PreAuthorize("hasRole('STAFF')")
-    @PostMapping("/fixed/{vehicleId}")
-    public ResponseEntity<FeeResponse> createFixed(@PathVariable Long vehicleId, @RequestBody FixedFee fee) {
-        return ResponseEntity.ok(feeService.createFixedFee(vehicleId, fee));
-    }
-
-    @PreAuthorize("hasRole('STAFF')")
-    @DeleteMapping("/fixed/{id}")
-    public ResponseEntity<Void> deleteFixed(@PathVariable Long id) {
-        feeService.softDeleteFixedFee(id);
-        return ResponseEntity.noContent().build();
+    @PostMapping("/fixed")
+    public ResponseEntity<FeeResponse> createFixed(@RequestBody CreateFixedFeeRequest req) {
+        return ResponseEntity.ok(feeService.createFixedFee(req));
     }
 }

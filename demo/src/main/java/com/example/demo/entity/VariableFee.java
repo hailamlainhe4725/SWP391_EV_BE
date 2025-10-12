@@ -37,7 +37,7 @@ public class VariableFee {
     StaffChecking staffChecking;
 
     @Enumerated(EnumType.STRING)
-    VariableFeeType type; // EXTRA_MILEAGE, DAMAGE_FEE, LATE_RETURN, CLEANING_FEE
+    VariableFeeType type;
     Double amount;
     String description;
 
