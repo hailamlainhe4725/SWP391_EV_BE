@@ -9,7 +9,14 @@ import com.example.demo.entity.User;
 import com.example.demo.enums.UserRole;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.security.CustomUserDetailsService;
+import com.example.demo.security.JwtUtils;
+
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +26,12 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class UserService {
+    @Autowired
+private AuthenticationManager authManager;
+@Autowired
+private CustomUserDetailsService userDetailsService;
+@Autowired
+private JwtUtils jwtUtils;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -88,12 +101,16 @@ public class UserService {
     }
 
     // ===== Authenticate (mock for now) =====
-    public AuthResponse authenticate(AuthRequest req) {
-        User user = userRepository.findByEmail(req.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("Invalid email or password"));
-        // Ở đây có thể bổ sung kiểm tra passwordEncoder.matches()
-        return new AuthResponse("FAKE_TOKEN", user.getRole().name(), user.getFullName());
-    }
+public AuthResponse authenticate(AuthRequest req) {
+    authManager.authenticate(
+            new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword())
+    );
+    var user = userRepository.findByEmail(req.getEmail())
+            .orElseThrow(() -> new ResourceNotFoundException("Invalid email or password"));
+    var userDetails = userDetailsService.loadUserByUsername(req.getEmail());
+    String token = jwtUtils.generateToken(userDetails);
+    return new AuthResponse(token, user.getRole().name(), user.getFullName());
+}
 
     // ===== Mapper =====
     private UserResponse mapToResponse(User user) {

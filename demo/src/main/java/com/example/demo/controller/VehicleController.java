@@ -17,7 +17,7 @@ public class VehicleController {
 
     private final VehicleService vehicleService;
 
-    @GetMapping
+    @GetMapping("/viewAllVehicle")
     public ResponseEntity<List<VehicleResponse>> getAll() {
         return ResponseEntity.ok(vehicleService.getAll());
     }
@@ -28,7 +28,7 @@ public class VehicleController {
     }
 
     @PreAuthorize("hasRole('STAFF')")
-    @PostMapping
+    @PostMapping("/createVehicle")
     public ResponseEntity<VehicleResponse> create(@Valid @RequestBody CreateVehicleRequest req) {
         return ResponseEntity.ok(vehicleService.create(req));
     }
@@ -40,7 +40,7 @@ public class VehicleController {
     }
 
     @PreAuthorize("hasRole('STAFF')")
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         vehicleService.softDelete(id);
         return ResponseEntity.noContent().build();

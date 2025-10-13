@@ -18,7 +18,7 @@ public class StaffCheckingController {
     private final StaffCheckingService staffCheckingService;
 
     @PreAuthorize("hasRole('STAFF')")
-    @GetMapping
+    @GetMapping("/viewAllStaffChecking")
     public ResponseEntity<List<StaffCheckingResponse>> getAll() {
         return ResponseEntity.ok(staffCheckingService.getAll());
     }
@@ -30,7 +30,7 @@ public class StaffCheckingController {
     }
 
     @PreAuthorize("hasRole('STAFF')")
-    @PostMapping
+    @PostMapping("/createStaffChecking")
     public ResponseEntity<StaffCheckingResponse> create(@RequestBody CreateStaffCheckingRequest req) {
         return ResponseEntity.ok(staffCheckingService.create(req));
     }

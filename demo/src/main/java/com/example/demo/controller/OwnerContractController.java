@@ -17,13 +17,13 @@ public class OwnerContractController {
     private final OwnerContractService ownerContractService;
 
     @PreAuthorize("hasAnyRole('USER','STAFF')")
-    @GetMapping
+    @GetMapping("/viewAllOwnerContract")
     public ResponseEntity<List<OwnerContractResponse>> getAll() {
         return ResponseEntity.ok(ownerContractService.getAll());
     }
 
     @PreAuthorize("hasRole('STAFF')")
-    @PostMapping
+    @PostMapping("/createOwnerContract")
     public ResponseEntity<OwnerContractResponse> create(@RequestBody CreateOwnerContractRequest req) {
         return ResponseEntity.ok(ownerContractService.create(req));
     }

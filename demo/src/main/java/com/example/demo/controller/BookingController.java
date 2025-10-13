@@ -23,7 +23,7 @@ public class BookingController {
 
     // Tạo booking mới (user đặt lịch)
     @PreAuthorize("hasRole('USER')")
-    @PostMapping
+    @PostMapping("/createBooking")
     public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody CreateBookingRequest req) {
         BookingResponse response = bookingService.createBooking(req);
         return ResponseEntity.ok(response);
@@ -50,7 +50,7 @@ public class BookingController {
 
     // Staff xem toàn bộ booking
     @PreAuthorize("hasRole('STAFF')")
-    @GetMapping
+    @GetMapping("/viewAllBooking")
     public ResponseEntity<List<BookingResponse>> getAllBookings() {
         return ResponseEntity.ok(bookingService.getAllBookings());
     }

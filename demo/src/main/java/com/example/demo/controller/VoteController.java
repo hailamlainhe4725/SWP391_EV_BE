@@ -30,7 +30,7 @@ public class VoteController {
 
     // ===== USER bỏ phiếu =====
     @PreAuthorize("hasRole('USER')")
-    @PostMapping
+    @PostMapping("/castVote")
     public ResponseEntity<VoteResponse> castVote(@RequestBody CreateVoteRequest req) {
         VoteResponse res = voteService.castVote(req);
         return ResponseEntity.ok(res);

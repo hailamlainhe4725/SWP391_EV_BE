@@ -17,13 +17,13 @@ public class OwnershipController {
     private final OwnershipService ownershipService;
 
     @PreAuthorize("hasRole('USER')")
-    @GetMapping("/my")
+    @GetMapping("/viewMyOnwership")
     public ResponseEntity<List<OwnershipResponse>> getMyOwnerships(Authentication auth) {
         return ResponseEntity.ok(ownershipService.getByUserEmail(auth.getName()));
     }
 
     @PreAuthorize("hasRole('STAFF')")
-    @GetMapping
+    @GetMapping("/viewAllOwnership")
     public ResponseEntity<List<OwnershipResponse>> getAll() {
         return ResponseEntity.ok(ownershipService.getAll());
     }

@@ -1,4 +1,5 @@
 package com.example.demo.controller;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import com.example.demo.dto.request.*;
 import com.example.demo.dto.response.*;
@@ -24,7 +25,7 @@ public class UserController {
         return ResponseEntity.ok(created);
     }
 
-    @PostMapping("/auth") // login endpoint (returns token via AuthResponse)
+    @PostMapping("/login") // login endpoint (returns token via AuthResponse)
     public ResponseEntity<AuthResponse> auth(@Valid @RequestBody AuthRequest request) {
         AuthResponse res = userService.authenticate(request);
         return ResponseEntity.ok(res);
@@ -49,7 +50,7 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('STAFF')")
-    @GetMapping
+    @GetMapping("/viewAllUser")
     public ResponseEntity<List<UserResponse>> getAll() {
         return ResponseEntity.ok(userService.getAll());
     }

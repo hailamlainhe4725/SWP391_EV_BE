@@ -18,13 +18,13 @@ public class ContractController {
     private final ContractService contractService;
 
     @PreAuthorize("hasRole('STAFF')")
-    @PostMapping
+    @PostMapping("/createContract")
     public ResponseEntity<ContractResponse> create(@RequestBody CreateContractRequest req) {
         return ResponseEntity.ok(contractService.create(req));
     }
 
     @PreAuthorize("hasAnyRole('USER','STAFF')")
-    @GetMapping
+    @GetMapping("/getAllContract")
     public ResponseEntity<List<ContractResponse>> getAll() {
         return ResponseEntity.ok(contractService.getAll());
     }
@@ -42,7 +42,7 @@ public class ContractController {
     }
 
     @PreAuthorize("hasRole('STAFF')")
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         contractService.softDelete(id);
         return ResponseEntity.noContent().build();

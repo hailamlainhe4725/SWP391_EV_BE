@@ -19,7 +19,7 @@ public class PaymentController {
 
     // === USER: tạo thanh toán ===
     @PreAuthorize("hasRole('USER')")
-    @PostMapping
+    @PostMapping("/createPayment")
     public ResponseEntity<PaymentResponse> createPayment(@RequestBody PaymentRequest req) {
         return ResponseEntity.ok(paymentService.createPayment(req));
     }

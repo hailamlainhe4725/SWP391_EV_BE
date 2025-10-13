@@ -19,7 +19,7 @@ public class InvoiceController {
 
     // === STAFF: tạo hóa đơn ===
     @PreAuthorize("hasRole('STAFF')")
-    @PostMapping
+    @PostMapping("/createInvoice")
     public ResponseEntity<InvoiceResponse> create(@RequestBody CreateInvoiceRequest req) {
         return ResponseEntity.ok(invoiceService.createInvoice(req));
     }
