@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.example.demo.enums.BillingStatus;
@@ -38,7 +39,7 @@ public class Invoice {
     String note;
 
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    List<InvoiceDetail> details;
+    List<InvoiceDetail> details = new ArrayList<>();
 
     @Column(name = "deleted")
     boolean deleted = false;

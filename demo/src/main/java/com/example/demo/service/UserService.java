@@ -64,7 +64,7 @@ private JwtUtils jwtUtils;
         user.setFullName(req.getFullName());
         user.setEmail(req.getEmail());
         user.setPhone(req.getPhone());
-        user.setPassword(passwordEncoder.encode(req.getPassword()));
+        user.setPassword(req.getPassword());
 
         // Enum mapping
         String roleStr = (req.getRole() == null || req.getRole().isEmpty()) ? "USER" : req.getRole().toUpperCase();

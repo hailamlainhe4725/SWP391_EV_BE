@@ -1,5 +1,6 @@
 package com.example.demo.repository;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -16,4 +17,11 @@ public interface VariableFeeRepository extends JpaRepository<VariableFee, Long> 
     List<FeeResponse> findByDeletedFalse();
 
     List<VariableFee> findUnbilledByUserAndVehicle(User user, Vehicle vehicle);
+
+    List<VariableFee> findByVehicleAndUserAndDeletedFalseAndCreatedAtBetween(
+        Vehicle vehicle,
+        User user,
+        LocalDateTime startOfMonth,
+        LocalDateTime endOfMonth
+    );
 }

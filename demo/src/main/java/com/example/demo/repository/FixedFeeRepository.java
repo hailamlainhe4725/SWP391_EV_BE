@@ -1,5 +1,6 @@
 package com.example.demo.repository;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -13,4 +14,10 @@ public interface FixedFeeRepository extends JpaRepository<FixedFee, Long> {
     List<FixedFee> findByVehicle(Vehicle vehicle);
 
     List<FeeResponse> findByDeletedFalse();
+
+        List<FixedFee> findByVehicleAndDeletedFalseAndCreatedAtBetween(
+        Vehicle vehicle,
+        LocalDateTime startOfMonth,
+        LocalDateTime endOfMonth
+    );
 }

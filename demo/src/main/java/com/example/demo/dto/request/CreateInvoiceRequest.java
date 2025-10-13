@@ -8,7 +8,5 @@ import java.time.LocalDateTime;
 public class CreateInvoiceRequest {
     private Long userId;
     private Long vehicleId;
-    private List<InvoiceDetailDto> details; // nested helper class or separate DTO
     private String note;
-    private LocalDateTime issuedDate;
 }

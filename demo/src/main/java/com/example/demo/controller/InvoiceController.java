@@ -21,7 +21,7 @@ public class InvoiceController {
     @PreAuthorize("hasRole('STAFF')")
     @PostMapping("/createInvoice")
     public ResponseEntity<InvoiceResponse> create(@RequestBody CreateInvoiceRequest req) {
-        return ResponseEntity.ok(invoiceService.createInvoice(req));
+        return ResponseEntity.ok(invoiceService.createAutoInvoice(req));
     }
 
     // === STAFF: xem tất cả hóa đơn ===
