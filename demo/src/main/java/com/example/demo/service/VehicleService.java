@@ -88,7 +88,7 @@ public class VehicleService {
         vehicleRepository.save(v);
     }
 
-    private VehicleResponse mapToResponse(Vehicle v) {
+    protected VehicleResponse mapToResponse(Vehicle v) {
         return VehicleResponse.builder()
                 .vehicleId(v.getVehicleId())
                 .brand(v.getBrand())
