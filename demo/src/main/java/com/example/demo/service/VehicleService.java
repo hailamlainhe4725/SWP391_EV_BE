@@ -25,6 +25,13 @@ public class VehicleService {
                 .collect(Collectors.toList());
     }
 
+    public List<VehicleResponse> gettop4() {
+        return vehicleRepository.findTop4ByIsDeletedFalseOrderByVehicleIdAsc().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+
     public VehicleResponse getById(Long id) {
         Vehicle vehicle = vehicleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));

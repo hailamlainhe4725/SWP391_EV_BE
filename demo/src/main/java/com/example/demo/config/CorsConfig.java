@@ -18,7 +18,7 @@ public class CorsConfig {
                                 "https://orthopterous-unwieldable-kristal.ngrok-free.dev",
                                 "https://0f150aea0297.ngrok-free.app",
                                 "https://vallate-enzootically-sterling.ngrok-free.dev",
-                                "https://6fee1d24a016.ngrok-free.app",
+                                "https://e798215d1ba4.ngrok-free.app",
                                 "http://localhost:3000",
                                 "http://localhost:5173",
                                 "http://127.0.0.1:3000")

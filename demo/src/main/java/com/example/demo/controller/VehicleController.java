@@ -10,12 +10,18 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import java.util.List;
 
+
 @RestController
 @RequestMapping("/api/vehicles")
 @RequiredArgsConstructor
 public class VehicleController {
 
     private final VehicleService vehicleService;
+
+    @GetMapping("/top4")
+    public ResponseEntity<List<VehicleResponse>> getTop4Vehicle() {
+        return ResponseEntity.ok(vehicleService.gettop4());
+    }
 
     @GetMapping("/viewAllVehicle")
     public ResponseEntity<List<VehicleResponse>> getAll() {
