@@ -79,8 +79,8 @@ private JwtUtils jwtUtils;
     }
 
     // ===== Update =====
-    public UserResponse update(Long id, UpdateUserRequest req) {
-        User user = userRepository.findById(id)
+    public UserResponse update(String email, UpdateUserRequest req) {
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (req.getFullName() != null)

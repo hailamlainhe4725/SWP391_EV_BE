@@ -40,12 +40,12 @@ public class UserController {
     }
 
     @PreAuthorize("hasAnyRole('USER','STAFF')")
-    @PutMapping("/{id}")
-    public ResponseEntity<UserResponse> update(@PathVariable Long id,
+    @PutMapping("/update")
+    public ResponseEntity<UserResponse> update(
             @Valid @RequestBody UpdateUserRequest req,
             Authentication auth) {
         // optional: allow self or staff
-        UserResponse updated = userService.update(id, req);
+        UserResponse updated = userService.update(auth.getName(), req);
         return ResponseEntity.ok(updated);
     }
 
@@ -56,9 +56,9 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('STAFF')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        userService.softDelete(id);
+    @DeleteMapping("/delete/{user_id}")
+    public ResponseEntity<Void> delete(@PathVariable Long user_id) {
+        userService.softDelete(user_id);
         return ResponseEntity.noContent().build();
     }
 }

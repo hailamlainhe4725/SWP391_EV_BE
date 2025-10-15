@@ -22,5 +22,5 @@ public class CreateVehicleRequest {
     Double operatingCostPerKm;
     String description;
     String imageUrl;
-    VehicleStatus vehicleStatus;
+    VehicleStatus status;
 }

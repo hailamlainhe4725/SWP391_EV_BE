@@ -26,7 +26,7 @@ public class VehicleService {
     }
 
     public List<VehicleResponse> gettop4() {
-        return vehicleRepository.findTop4ByIsDeletedFalseOrderByVehicleIdAsc().stream()
+        return vehicleRepository.findTop4ByDeletedFalseOrderByVehicleIdAsc().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -50,7 +50,7 @@ public class VehicleService {
                 .operatingCostPerKm(req.getOperatingCostPerKm())
                 .description(req.getDescription())
                 .imageUrl(req.getImageUrl())
-                .status(req.getVehicleStatus())
+                .status(req.getStatus())
                 .build();
         vehicleRepository.save(v);
         return mapToResponse(v);

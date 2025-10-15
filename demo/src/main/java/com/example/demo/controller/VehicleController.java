@@ -27,8 +27,9 @@ public class VehicleController {
     public ResponseEntity<List<VehicleResponse>> getAll() {
         return ResponseEntity.ok(vehicleService.getAll());
     }
-
-    @GetMapping("/{id}")
+    
+    @PreAuthorize("hasAnyRole('USER','STAFF')")
+    @GetMapping("/vehicle/{id}")
     public ResponseEntity<VehicleResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(vehicleService.getById(id));
     }
@@ -40,7 +41,7 @@ public class VehicleController {
     }
 
     @PreAuthorize("hasRole('STAFF')")
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<VehicleResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateVehicleRequest req) {
         return ResponseEntity.ok(vehicleService.update(id, req));
     }
