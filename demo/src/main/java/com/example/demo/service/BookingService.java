@@ -1,12 +1,15 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.request.CreateBookingRequest;
+import com.example.demo.dto.request.UpdateStatusBookingRequest;
 import com.example.demo.dto.response.BookingResponse;
 import com.example.demo.entity.*;
 import com.example.demo.enums.BookingStatus;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.*;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -24,8 +27,8 @@ public class BookingService {
         private final OwnershipRepository ownershipRepository;
 
         // ====================== CREATE BOOKING ======================
-        public BookingResponse createBooking(CreateBookingRequest req) {
-                User user = userRepository.findById(req.getUserId())
+        public BookingResponse createBooking(Authentication authentication,CreateBookingRequest req) {
+                User user = userRepository.findByEmail(authentication.getName())
                                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
                 Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
@@ -49,6 +52,9 @@ public class BookingService {
                         throw new RuntimeException("You have reached your monthly usage limit for this vehicle.");
                 }
 
+                if (req.getStartTime().isBefore(LocalDateTime.now())) {
+    throw new RuntimeException("Cannot create booking in the past.");
+}
                 // Đặt thời gian cố định (1AM - 11PM)
                 LocalDateTime bookingDate = req.getStartTime().toLocalDate().atStartOfDay();
                 LocalDateTime startTime = bookingDate.plusHours(1); // 01:00 AM
@@ -71,6 +77,13 @@ public class BookingService {
                 List<Booking> conflicts = bookingRepository.findConflictingBookings(
                                 vehicle.getVehicleId(), startTime, endTime);
 
+                                // Nếu đã có booking được Confirmed → chặn luôn
+boolean hasConfirmed = conflicts.stream()
+        .anyMatch(b -> b.getBookingStatus() == BookingStatus.Confirmed);
+
+if (hasConfirmed) {
+    throw new RuntimeException("This time slot has already been booked by another co-owner.");
+}
                 // Nếu không có ai khác → auto confirm
                 if (conflicts.isEmpty()) {
                         booking.setBookingStatus(BookingStatus.Confirmed);
@@ -102,13 +115,6 @@ public class BookingService {
         }
 
         // ====================== GET BOOKINGS ======================
-        public List<BookingResponse> getUserBookings(Long userId) {
-                return bookingRepository.findAll().stream()
-                                .filter(b -> b.getUser().getId().equals(userId))
-                                .filter(b -> !b.isDeleted())
-                                .map(this::mapToResponse)
-                                .collect(Collectors.toList());
-        }
 
         public List<BookingResponse> getAllBookings() {
                 return bookingRepository.findAll().stream()
@@ -117,23 +123,25 @@ public class BookingService {
                                 .collect(Collectors.toList());
         }
 
-        public List<BookingResponse> getBookingsByEmail(String email) {
+        public List<BookingResponse> getMyBookings(Authentication authentication) {
+                                User user = userRepository.findByEmail(authentication.getName())
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
                 return bookingRepository.findAll().stream()
-                                .filter(b -> b.getUser().getEmail().equals(email))
+                                .filter(b -> b.getUser().getId()==user.getId())
                                 .filter(b -> !b.isDeleted())
                                 .map(this::mapToResponse)
                                 .collect(Collectors.toList());
         }
 
         // ====================== UPDATE STATUS ======================
-        public BookingResponse updateBookingStatus(Long id, String status) {
-                Booking booking = bookingRepository.findById(id)
+        public BookingResponse updateBookingStatus(UpdateStatusBookingRequest request) {
+                Booking booking = bookingRepository.findById(request.getId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
                 try {
-                        booking.setBookingStatus(Enum.valueOf(BookingStatus.class, status.toUpperCase()));
+                        booking.setBookingStatus(Enum.valueOf(BookingStatus.class, request.getStatus()));
                 } catch (Exception e) {
-                        throw new RuntimeException("Invalid booking status: " + status);
+                        throw new RuntimeException("Invalid booking status: " + request.getStatus());
                 }
 
                 bookingRepository.save(booking);

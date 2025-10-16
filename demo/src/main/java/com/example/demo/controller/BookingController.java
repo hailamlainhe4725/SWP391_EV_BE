@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.request.CreateBookingRequest;
+import com.example.demo.dto.request.UpdateStatusBookingRequest;
 import com.example.demo.dto.response.BookingResponse;
 import com.example.demo.service.BookingService;
 import jakarta.validation.Valid;
@@ -24,8 +25,8 @@ public class BookingController {
     // Tạo booking mới (user đặt lịch)
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/createBooking")
-    public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody CreateBookingRequest req) {
-        BookingResponse response = bookingService.createBooking(req);
+    public ResponseEntity<BookingResponse> createBooking(Authentication authentication,@Valid @RequestBody CreateBookingRequest req) {
+        BookingResponse response = bookingService.createBooking(authentication,req);
         return ResponseEntity.ok(response);
     }
 
@@ -33,8 +34,7 @@ public class BookingController {
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/my")
     public ResponseEntity<List<BookingResponse>> getMyBookings(Authentication auth) {
-        String email = auth.getName();
-        List<BookingResponse> res = bookingService.getBookingsByEmail(email);
+        List<BookingResponse> res = bookingService.getMyBookings(auth);
         return ResponseEntity.ok(res);
     }
 
@@ -58,10 +58,8 @@ public class BookingController {
     // Staff thay đổi trạng thái booking (Pending -> Confirmed / Cancelled /
     // Completed)
     @PreAuthorize("hasRole('STAFF')")
-    @PutMapping("/{id}/status")
-    public ResponseEntity<BookingResponse> updateStatus(
-            @PathVariable Long id,
-            @RequestParam String status) {
-        return ResponseEntity.ok(bookingService.updateBookingStatus(id, status));
+    @PutMapping("updateStatus")
+    public ResponseEntity<BookingResponse> updateStatus(@RequestBody UpdateStatusBookingRequest req) {
+        return ResponseEntity.ok(bookingService.updateBookingStatus(req));
     }
 }
