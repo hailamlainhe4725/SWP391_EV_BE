@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 public class OwnershipController {
 
     private final OwnershipService ownershipService;
-
+// tim theo id 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/viewMyOnwership")
     public ResponseEntity<List<OwnershipResponse>> getMyOwnerships(Authentication auth) {
@@ -37,6 +37,12 @@ public class OwnershipController {
 @PreAuthorize("hasRole('USER')")
 public ResponseEntity<List<VehicleResponse>> getMyVehicles(Authentication auth) {
     return ResponseEntity.ok(ownershipService.getVehicleInMyOwnership(auth));
+}
+
+    @GetMapping("/viewMygroupOwnership/{vehicle_Id}")
+@PreAuthorize("hasRole('USER')")
+public ResponseEntity<List<OwnershipResponse>> getMyGroup(Authentication auth,@PathVariable Long vehicle_Id) {
+    return ResponseEntity.ok(ownershipService.getGroupOwnership(auth,vehicle_Id));
 }
 
 }

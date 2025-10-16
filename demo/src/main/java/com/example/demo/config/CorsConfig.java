@@ -18,9 +18,10 @@ public class CorsConfig {
                                 "https://orthopterous-unwieldable-kristal.ngrok-free.dev",
                                 "https://0f150aea0297.ngrok-free.app",
                                 "https://vallate-enzootically-sterling.ngrok-free.dev",
-                                "https://e798215d1ba4.ngrok-free.app",
+                                "https://unbackward-imperviously-hiram.ngrok-free.dev",
                                 "http://localhost:3000",
                                 "http://localhost:5173",
+                                "https://caleb-idiomatic-milissa.ngrok-free.dev",
                                 "http://127.0.0.1:3000")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                         .allowedHeaders("*")

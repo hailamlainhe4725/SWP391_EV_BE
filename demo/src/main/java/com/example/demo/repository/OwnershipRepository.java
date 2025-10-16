@@ -22,4 +22,8 @@ public interface OwnershipRepository extends JpaRepository<Ownership, Long> {
 
     List<Ownership> findByUser_Email(String email);
 
+    List<Ownership> findByUser_Id(Long id);
+
+    List<Ownership> findByVehicle_VehicleId(Long vehicleId);
+
 }
