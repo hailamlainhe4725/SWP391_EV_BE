@@ -74,7 +74,7 @@ public class StaffCheckingService {
 
                 // Lấy các lần check trước đó
                 List<StaffChecking> existing = staffCheckingRepository.findByBookingAndDeletedFalse(booking);
-
+                System.out.printf("chua loi");
                 // === CASE 1: CheckOut (staff giao xe) ===
                 if (type == StaffCheckingType.CheckOut) {
                         boolean hasCheckOut = existing.stream()
@@ -120,6 +120,7 @@ public class StaffCheckingService {
                                         ? checkout.getBatteryPercent() - req.getBatteryPercent()
                                         : null;
 
+                        System.out.printf("chua loi1");
                         // --- Cập nhật ownership ---
                         ownership = ownershipRepository
                                         .findByUser_IdAndVehicle_VehicleId(user.getId(), vehicle.getVehicleId())
