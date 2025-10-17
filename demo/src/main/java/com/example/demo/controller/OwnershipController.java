@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.response.OwnershipResponse;
+import com.example.demo.dto.response.OwnershipVehicleResponse;
 import com.example.demo.dto.response.VehicleResponse;
 import com.example.demo.entity.Ownership;
 import com.example.demo.entity.User;
@@ -44,5 +45,11 @@ public ResponseEntity<List<VehicleResponse>> getMyVehicles(Authentication auth) 
 public ResponseEntity<List<OwnershipResponse>> getMyGroup(Authentication auth,@PathVariable Long vehicle_Id) {
     return ResponseEntity.ok(ownershipService.getGroupOwnership(auth,vehicle_Id));
 }
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/viewVehicleAndOwnship")
+public List<OwnershipVehicleResponse> getMyOwnershipVehicles(Authentication authentication) {
+        return ownershipService.getMyOwnershipVehicles(authentication);
+    }
 
 }

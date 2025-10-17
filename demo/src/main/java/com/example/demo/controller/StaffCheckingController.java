@@ -6,6 +6,7 @@ import com.example.demo.service.StaffCheckingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,16 +24,24 @@ public class StaffCheckingController {
         return ResponseEntity.ok(staffCheckingService.getAll());
     }
 
+    
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/booking/{bookingId}")
-    public ResponseEntity<List<StaffCheckingResponse>> getByBooking(@PathVariable Long bookingId) {
+    public ResponseEntity<List<StaffCheckingResponse>> getByBookingId(@PathVariable Long bookingId) {
         return ResponseEntity.ok(staffCheckingService.getByBooking(bookingId));
     }
 
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/viewAllMyBooking")
+     public ResponseEntity<List<StaffCheckingResponse>> getByBooking(Authentication authentication) {
+        return ResponseEntity.ok(staffCheckingService.getByBookingAuthentication(authentication));
+    }
+
+
     @PreAuthorize("hasRole('STAFF')")
     @PostMapping("/createStaffChecking")
-    public ResponseEntity<StaffCheckingResponse> create(@RequestBody CreateStaffCheckingRequest req) {
-        return ResponseEntity.ok(staffCheckingService.create(req));
+    public ResponseEntity<StaffCheckingResponse> create(Authentication authentication,@RequestBody CreateStaffCheckingRequest req) {
+        return ResponseEntity.ok(staffCheckingService.create(authentication,req));
     }
 
     @PreAuthorize("hasRole('STAFF')")

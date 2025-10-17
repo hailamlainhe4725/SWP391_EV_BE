@@ -14,4 +14,6 @@ public interface StaffCheckingRepository extends JpaRepository<StaffChecking, Lo
     List<StaffChecking> findByBookingAndDeletedFalse(Booking booking);
 
     List<StaffChecking> findByVehicleVehicleId(Long vehicleId);
+
+    List<StaffChecking> findByUser_IdAndDeletedFalse(Long Id);
 }

@@ -13,8 +13,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CreateStaffCheckingRequest {
     Long vehicleId;
-    Long userId;
-    Long staffId;
+    String userEmail;
     Long bookingId;
     StaffCheckingType staffCheckingType;
     Double odometer;

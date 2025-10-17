@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.response.OwnershipResponse;
+import com.example.demo.dto.response.OwnershipVehicleResponse;
 import com.example.demo.dto.response.VehicleResponse;
 import com.example.demo.entity.Ownership;
 import com.example.demo.entity.User;
@@ -93,4 +94,46 @@ public List<VehicleResponse>getVehicleInMyOwnership(Authentication auth){
 
                 .build();
     }
+
+
+     // === Lấy danh sách xe mà user đang sở hữu ===
+    public List<OwnershipVehicleResponse> getMyOwnershipVehicles(Authentication authentication) {
+       User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        return ownershipRepository.findByUser_IdAndDeletedFalse(user.getId())
+                .stream()
+                .map(this::mapToOwnershipVehicleResponse)
+                .collect(Collectors.toList());
+    }
+
+    // === Map Entity → DTO ===
+    private OwnershipVehicleResponse mapToOwnershipVehicleResponse(Ownership ownership) {
+        Vehicle v = ownership.getVehicle();
+
+        return OwnershipVehicleResponse.builder()
+                .ownershipId(ownership.getOwnershipId())
+                .totalSharePercentage(ownership.getTotalSharePercentage())
+                .status(ownership.getStatus())
+                .createdAt(ownership.getCreatedAt())
+                .allowedKmThisMonth(ownership.getAllowedKmThisMonth())
+                .usedKmThisMonth(ownership.getUsedKmThisMonth())
+                .allowedDaysThisMonth(ownership.getAllowedDaysThisMonth())
+                .usedDaysThisMonth(ownership.getUsedDaysThisMonth())
+
+                .vehicleId(v.getVehicleId())
+                .brand(v.getBrand())
+                .model(v.getModel())
+                .plateNumber(v.getPlateNumber())
+                .color(v.getColor())
+                .year(v.getYear())
+                .batteryCapacityKwh(v.getBatteryCapacityKwh())
+                .operatingCostPerDay(v.getOperatingCostPerDay())
+                .operatingCostPerKm(v.getOperatingCostPerKm())
+                .description(v.getDescription())
+                .imageUrl(v.getImageUrl()) // nếu có field này
+                .vehicleStatus(v.getStatus())
+                .build();
+    }
+    
 }

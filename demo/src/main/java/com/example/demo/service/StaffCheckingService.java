@@ -9,11 +9,15 @@ import com.example.demo.enums.VariableFeeType;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.*;
 import lombok.RequiredArgsConstructor;
+
+import com.example.demo.entity.User;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +29,6 @@ public class StaffCheckingService {
         private final BookingRepository bookingRepository;
         private final OwnershipRepository ownershipRepository;
         private final VariableFeeRepository variableFeeRepository;
-
         // === Lấy toàn bộ Staff Checking (staff dùng)
         public List<StaffCheckingResponse> getAll() {
                 return staffCheckingRepository.findByDeletedFalse().stream()
@@ -43,14 +46,24 @@ public class StaffCheckingService {
                                 .collect(Collectors.toList());
         }
 
+        public List<StaffCheckingResponse> getByBookingAuthentication(Authentication authentication) {
+        User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        return staffCheckingRepository.findByUser_IdAndDeletedFalse(user.getId())
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+        }
+
         // === Staff tạo CheckIn hoặc CheckOut ===
-        public StaffCheckingResponse create(CreateStaffCheckingRequest req) {
+        public StaffCheckingResponse create(Authentication authentication,CreateStaffCheckingRequest req) {
                 Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
-                User user = userRepository.findById(req.getUserId())
-                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-                User staff = userRepository.findById(req.getStaffId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
+                User staff = userRepository.findByEmail(authentication.getName())
+                                .orElseThrow(() -> new ResourceNotFoundException("staff not found"));
+                User user = userRepository.findByEmail(req.getUserEmail())
+                                .orElseThrow(() -> new ResourceNotFoundException("user not found"));
                 Booking booking = bookingRepository.findById(req.getBookingId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
                 Ownership ownership = ownershipRepository
@@ -83,7 +96,11 @@ public class StaffCheckingService {
                                         .deleted(false)
                                         .build();
 
+
                         staffCheckingRepository.save(checkOut);
+
+                            booking.setBookingStatus(BookingStatus.Completed);
+                                bookingRepository.save(booking);
                         return mapToResponse(checkOut);
                 }
 
