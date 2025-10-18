@@ -29,10 +29,7 @@ public class PaymentController {
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/my")
     public ResponseEntity<List<PaymentResponse>> getMyPayments(Authentication authentication) {
-        List<PaymentResponse> res = paymentService.getAll().stream()
-                .filter(p -> p.getInvoiceId().equals(userId))
-                .toList();
-        return ResponseEntity.ok(res);
+        return ResponseEntity.ok(paymentService.getMyPayment(authentication));
     }
 
     // === STAFF: xem tất cả thanh toán ===

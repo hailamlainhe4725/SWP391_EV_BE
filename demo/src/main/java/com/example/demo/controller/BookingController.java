@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.dto.request.CreateBookingRequest;
 import com.example.demo.dto.request.UpdateStatusBookingRequest;
 import com.example.demo.dto.response.BookingResponse;
+import com.example.demo.dto.response.BookingVehicleResponse;
 import com.example.demo.service.BookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -45,11 +46,11 @@ public class BookingController {
     //phu offer them tim booking theo id xe
         @GetMapping("/byVehicle/{vehicleId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<BookingResponse>> getBookingsByVehicle(
+    public ResponseEntity<List<BookingVehicleResponse>> getBookingsByVehicle(
             Authentication auth,
             @PathVariable Long vehicleId) {
 
-        List<BookingResponse> bookings = bookingService.getBookingsByVehicle(auth, vehicleId);
+        List<BookingVehicleResponse> bookings = bookingService.getBookingsByVehicle(auth, vehicleId);
         return ResponseEntity.ok(bookings);
     }
     // Hủy booking (nếu chưa bắt đầu)

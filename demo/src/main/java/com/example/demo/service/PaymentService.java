@@ -54,13 +54,19 @@ public class PaymentService {
                                 .map(this::mapToResponse)
                                 .collect(Collectors.toList());
         }
-        public List<PaymentResponse> getMyPayment(Authentication authentication) {
-                             User user = userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-                return getAll().stream()
-                .filter(p -> p.getInvoiceId().equals(user.getId()))
-                .toList();
-        }
+public List<PaymentResponse> getMyPayment(Authentication authentication) {
+    User user = userRepository.findByEmail(authentication.getName())
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    Long userId = user.getId(); // 🟢 fix lỗi cannot find symbol: userId
+
+    return paymentRepository.findByInvoice_User_Id(userId)
+            .stream()
+            .map(this::mapToResponse)
+            .toList();
+}
+
+
 
 
         private PaymentResponse mapToResponse(Payment p) {

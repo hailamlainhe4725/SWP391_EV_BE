@@ -3,6 +3,7 @@ package com.example.demo.service;
 import com.example.demo.dto.request.CreateBookingRequest;
 import com.example.demo.dto.request.UpdateStatusBookingRequest;
 import com.example.demo.dto.response.BookingResponse;
+import com.example.demo.dto.response.BookingVehicleResponse;
 import com.example.demo.entity.*;
 import com.example.demo.enums.BookingStatus;
 import com.example.demo.exception.ResourceNotFoundException;
@@ -121,16 +122,17 @@ public class BookingService {
                                 .collect(Collectors.toList());
         }
 //offer them cua phu
-        public List<BookingResponse> getBookingsByVehicle(Authentication authentication, Long vehicleId) {
+        public List<BookingVehicleResponse> getBookingsByVehicle(Authentication authentication, Long vehicleId) {
     User user = userRepository.findByEmail(authentication.getName())
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     return bookingRepository.findAll().stream()
             .filter(b -> b.getVehicle().getVehicleId().equals(vehicleId))
             .filter(b -> !b.isDeleted())
-            .map(this::mapToResponse)
+            .map(this::mapToResponseB)
             .collect(Collectors.toList());
 }
+
 
         public List<BookingResponse> getMyBookings(Authentication authentication) {
                                 User user = userRepository.findByEmail(authentication.getName())
@@ -193,4 +195,30 @@ public class BookingService {
                                 .createdAt(b.getCreatedAt())
                                 .build();
         }
+
+        private BookingVehicleResponse mapToResponseB(Booking booking) {
+    Vehicle v = booking.getVehicle();
+    User u = booking.getUser();
+
+    return BookingVehicleResponse.builder()
+            // Vehicle info
+            .vehicleId(v.getVehicleId())
+            .brand(v.getBrand())
+            .model(v.getModel())
+            .plateNumber(v.getPlateNumber())
+            .year(v.getYear())
+            .imageUrl(v.getImageUrl()) // hoặc v.getVehicleImages().get(0).getUrl()
+
+            // Booking info
+            .bookingId(booking.getBookingId())
+            .vehicleName(v.getModel() + " - " + v.getBrand())
+            .userName(u.getFullName())
+            .bookingStatus(booking.getBookingStatus().name())
+            .priorityScore(booking.getPriorityScore())
+            .startTime(booking.getStartTime())
+            .endTime(booking.getEndTime())
+            .createdAt(booking.getCreatedAt())
+            .build();
+}
+
 }
