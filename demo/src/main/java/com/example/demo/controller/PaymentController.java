@@ -6,6 +6,7 @@ import com.example.demo.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class PaymentController {
     // === USER: xem lịch sử thanh toán của mình ===
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/my")
-    public ResponseEntity<List<PaymentResponse>> getMyPayments(@RequestParam Long userId) {
+    public ResponseEntity<List<PaymentResponse>> getMyPayments(Authentication authentication) {
         List<PaymentResponse> res = paymentService.getAll().stream()
                 .filter(p -> p.getInvoiceId().equals(userId))
                 .toList();

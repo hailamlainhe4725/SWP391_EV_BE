@@ -6,6 +6,7 @@ import com.example.demo.service.InvoiceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,10 +35,7 @@ public class InvoiceController {
     // === USER: xem hóa đơn của mình ===
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/my")
-    public ResponseEntity<List<InvoiceResponse>> getMyInvoices(@RequestParam Long userId) {
-        return ResponseEntity.ok(
-                invoiceService.getAllInvoices().stream()
-                        .filter(i -> i.getUserId().equals(userId))
-                        .toList());
+    public ResponseEntity<List<InvoiceResponse>> getMyInvoices(Authentication authentication) {
+        return ResponseEntity.ok(invoiceService.getMyInvoice(authentication));
     }
 }

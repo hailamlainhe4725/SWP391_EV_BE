@@ -27,7 +27,7 @@ public class Payment {
     LocalDateTime paymentDate;
     String method;
     @Enumerated(EnumType.STRING)
-    TransactionStatus status = TransactionStatus.INITIATED;
+    TransactionStatus status ;
     @Column(name = "deleted")
     boolean deleted = false;
 }

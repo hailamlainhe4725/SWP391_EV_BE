@@ -4,6 +4,7 @@ import com.example.demo.dto.request.CreateFixedFeeRequest;
 import com.example.demo.dto.request.CreateVariableFeeRequest;
 import com.example.demo.dto.response.FeeResponse;
 import com.example.demo.entity.FixedFee;
+import com.example.demo.entity.Ownership;
 import com.example.demo.entity.User;
 import com.example.demo.entity.VariableFee;
 import com.example.demo.entity.Vehicle;
@@ -11,10 +12,13 @@ import com.example.demo.enums.FixFeeType;
 import com.example.demo.enums.VariableFeeType;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.FixedFeeRepository;
+import com.example.demo.repository.OwnershipRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.repository.VariableFeeRepository;
 import com.example.demo.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -24,7 +28,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class FeeService {
-
+        private final OwnershipRepository ownershipRepository;
         private final VariableFeeRepository variableFeeRepository;
         private final FixedFeeRepository fixedFeeRepository;
         private final VehicleRepository vehicleRepository;
@@ -35,9 +39,12 @@ public class FeeService {
                 Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
 
-                User user = userRepository.findById(req.getUserId())
+                User user = userRepository.findByEmail(req.getEmail())
                                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+                Ownership ownership = ownershipRepository.findByUser_IdAndVehicle_VehicleId(
+                                user.getId(), vehicle.getVehicleId())
+                                .orElseThrow(() -> new RuntimeException("Ownership not found for this vehicle"));                
                 VariableFee fee = VariableFee.builder()
                                 .vehicle(vehicle)
                                 .user(user)

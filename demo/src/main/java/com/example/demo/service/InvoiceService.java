@@ -8,6 +8,8 @@ import com.example.demo.enums.BillingStatus;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.*;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -102,6 +104,15 @@ public class InvoiceService {
                 .collect(Collectors.toList());
     }
 
+        public List<InvoiceResponse> getMyInvoice(Authentication authentication) {
+             User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return getAllInvoices().stream()
+                        .filter(i -> i.getUserId().equals(user.getId()))
+                        .toList();
+    }
+
+    
    private InvoiceResponse mapToResponse(Invoice invoice) {
     // đảm bảo không null
     List<InvoiceDetail> invoiceDetails = invoice.getDetails();
