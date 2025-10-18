@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.request.CreateContractRequest;
+import com.example.demo.dto.request.StatusUpdateRequest;
 import com.example.demo.dto.response.ContractResponse;
 import com.example.demo.enums.ContractStatus;
 import com.example.demo.service.ContractService;
@@ -30,15 +31,15 @@ public class ContractController {
     }
 
     @PreAuthorize("hasAnyRole('USER','STAFF')")
-    @GetMapping("/{id}")
+    @GetMapping("/unit/{id}")
     public ResponseEntity<ContractResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(contractService.getById(id));
     }
 
     @PreAuthorize("hasRole('STAFF')")
-    @PutMapping("/{id}/status")
-    public ResponseEntity<ContractResponse> updateStatus(@PathVariable Long id, @RequestParam ContractStatus status) {
-        return ResponseEntity.ok(contractService.updateStatus(id, status));
+    @PutMapping("/{id}")
+    public ResponseEntity<ContractResponse> updateStatus(@PathVariable Long id, @RequestBody StatusUpdateRequest request) {
+        return ResponseEntity.ok(contractService.updateStatus(id, request.getStatus()));
     }
 
     @PreAuthorize("hasRole('STAFF')")
