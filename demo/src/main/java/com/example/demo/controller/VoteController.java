@@ -9,6 +9,7 @@ import com.example.demo.service.VoteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,16 +24,30 @@ public class VoteController {
     // ===== STAFF tạo chủ đề biểu quyết =====
     @PreAuthorize("hasRole('STAFF')")
     @PostMapping("/topics")
-    public ResponseEntity<VoteTopicResponse> createTopic(@RequestBody CreateVoteTopicRequest req) {
-        VoteTopicResponse res = voteService.createTopic(req);
+    public ResponseEntity<VoteTopicResponse> createTopic(Authentication authentication,@RequestBody CreateVoteTopicRequest req) {
+        VoteTopicResponse res = voteService.createTopic(authentication,req);
+        return ResponseEntity.ok(res);
+    }
+
+        @PreAuthorize("hasRole('STAFF')")
+    @GetMapping("/viewAllTopic")
+    public ResponseEntity<List<VoteTopicResponse>> viewAllVoteTopic() {
+        List<VoteTopicResponse> res = voteService.getAllVoteTopic();
+        return ResponseEntity.ok(res);
+    }
+    //can 1 method sao cho nguoi dung thay duoc voteTopic cua ownship cua minh
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/viewTopicUser")
+    public ResponseEntity<List<VoteTopicResponse>> viewTopicUser(Authentication authentication){
+        List<VoteTopicResponse> res = voteService.getUserTopic(authentication);
         return ResponseEntity.ok(res);
     }
 
     // ===== USER bỏ phiếu =====
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/castVote")
-    public ResponseEntity<VoteResponse> castVote(@RequestBody CreateVoteRequest req) {
-        VoteResponse res = voteService.castVote(req);
+    public ResponseEntity<VoteResponse> castVote(Authentication authentication,@RequestBody CreateVoteRequest req) {
+        VoteResponse res = voteService.castVote(authentication,req);
         return ResponseEntity.ok(res);
     }
 

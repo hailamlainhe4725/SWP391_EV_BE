@@ -6,8 +6,11 @@ import com.example.demo.dto.response.VoteResponse;
 import com.example.demo.dto.response.VoteTopicResponse;
 import com.example.demo.entity.*;
 import com.example.demo.enums.*;
+import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.*;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,12 +23,13 @@ public class VoteService {
         private final VoteTopicRepository voteTopicRepository;
         private final OwnershipRepository ownershipRepository;
         private final UserRepository userRepository;
+        
 
         // ====== Tạo chủ đề biểu quyết ======
-        public VoteTopicResponse createTopic(CreateVoteTopicRequest req) {
+        public VoteTopicResponse createTopic(Authentication authentication,CreateVoteTopicRequest req) {
                 Ownership ownership = ownershipRepository.findById(req.getOwnershipId())
                                 .orElseThrow(() -> new RuntimeException("Ownership not found"));
-                User creator = userRepository.findById(req.getCreatorId())
+                User creator = userRepository.findByEmail(authentication.getName())
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 
                 double ratio = switch (req.getDecisionType()) {
@@ -48,11 +52,38 @@ public class VoteService {
                 return mapTopicToResponse(topic);
         }
 
+        public List<VoteTopicResponse> getAllVoteTopic(){
+        return voteTopicRepository.findAll().stream()
+                                .filter(b -> !b.isDeleted())
+                                .map(this::mapTopicToResponse)
+                                .collect(Collectors.toList());
+        }
+
+                public List<VoteTopicResponse> getUserTopic(
+        Authentication authentication){
+                                      User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Lấy tất cả ownership mà user này tham gia
+        List<Ownership> ownerships = ownershipRepository.findByUserAndDeletedFalse(user);
+
+        if (ownerships.isEmpty()) {
+            throw new ResourceNotFoundException("User does not own any vehicles or groups");
+        }
+
+        // Lấy tất cả voteTopic của các ownership đó
+        List<VoteTopic> allTopics = voteTopicRepository.findByOwnershipIn(ownerships);
+
+        //Chuyển thành response
+        return allTopics.stream()
+                .map(this::mapTopicToResponse)
+                .collect(Collectors.toList());
+        }
         // ====== Người dùng bỏ phiếu ======
-        public VoteResponse castVote(CreateVoteRequest req) {
+        public VoteResponse castVote(Authentication authentication,CreateVoteRequest req) {
                 VoteTopic topic = voteTopicRepository.findById(req.getTopicId())
                                 .orElseThrow(() -> new RuntimeException("Topic not found"));
-                User user = userRepository.findById(req.getUserId())
+                User user = userRepository.findByEmail(authentication.getName())
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 
                 Ownership ownership = ownershipRepository.findByUser_IdAndVehicle_VehicleId(

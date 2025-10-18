@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface VoteTopicRepository extends JpaRepository<VoteTopic, Long> {
     List<VoteTopic> findByOwnership(Ownership ownership);
+    List<VoteTopic> findByOwnershipIn(List<Ownership> ownerships);
 }

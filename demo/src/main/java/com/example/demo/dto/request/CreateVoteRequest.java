@@ -6,6 +6,5 @@ import lombok.Data;
 
 public class CreateVoteRequest {
     private Long topicId;
-    private Long userId;
     private boolean agree; // true = đồng ý, false = không
 }

@@ -30,6 +30,9 @@ public class BookingController {
         return ResponseEntity.ok(response);
     }
 
+
+
+
     // Xem các booking của chính user
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/my")
@@ -38,6 +41,17 @@ public class BookingController {
         return ResponseEntity.ok(res);
     }
 
+    
+//phu offer them tim booking theo id xe
+    @GetMapping("/byVehicle/{vehicleId}")
+@PreAuthorize("hasRole('USER')")
+public ResponseEntity<List<BookingResponse>> getBookingsByVehicle(
+        Authentication auth,
+        @PathVariable Long vehicleId) {
+
+    List<BookingResponse> bookings = bookingService.getBookingsByVehicle(auth, vehicleId);
+    return ResponseEntity.ok(bookings);
+}
     // Hủy booking (nếu chưa bắt đầu)
     @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/{bookingId}")

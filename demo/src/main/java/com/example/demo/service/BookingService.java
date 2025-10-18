@@ -53,8 +53,8 @@ public class BookingService {
                 }
 
                 if (req.getStartTime().isBefore(LocalDateTime.now())) {
-    throw new RuntimeException("Cannot create booking in the past.");
-}
+                throw new RuntimeException("Cannot create booking in the past.");
+                }
                 // Đặt thời gian cố định (1AM - 11PM)
                 LocalDateTime bookingDate = req.getStartTime().toLocalDate().atStartOfDay();
                 LocalDateTime startTime = bookingDate.plusHours(1); // 01:00 AM
@@ -78,40 +78,38 @@ public class BookingService {
                                 vehicle.getVehicleId(), startTime, endTime);
 
                                 // Nếu đã có booking được Confirmed → chặn luôn
-boolean hasConfirmed = conflicts.stream()
-        .anyMatch(b -> b.getBookingStatus() == BookingStatus.Confirmed);
+                boolean hasConfirmed = conflicts.stream()
+                        .anyMatch(b -> b.getBookingStatus() == BookingStatus.Confirmed);
 
-if (hasConfirmed) {
-    throw new RuntimeException("This time slot has already been booked by another co-owner.");
-}
-                // Nếu không có ai khác → auto confirm
-                if (conflicts.isEmpty()) {
-                        booking.setBookingStatus(BookingStatus.Confirmed);
-                } else {
-                        // Lấy booking có priority cao nhất trong nhóm
-                        Booking topBooking = conflicts.stream()
-                                        .max(Comparator.comparing(Booking::getPriorityScore)
-                                                        .thenComparing(Booking::getCreatedAt))
-                                        .orElse(null);
-
-                        // So sánh người mới
-                        if (topBooking != null && priorityScore > topBooking.getPriorityScore()) {
-                                // New booking thắng → confirm
-                                booking.setBookingStatus(BookingStatus.Confirmed);
-
-                                // Hủy những người cũ
-                                for (Booking b : conflicts) {
-                                        b.setBookingStatus(BookingStatus.Cancelled);
-                                        bookingRepository.save(b);
-                                }
-                        } else {
-                                booking.setBookingStatus(BookingStatus.Cancelled);
-                                throw new RuntimeException("A co-owner with higher priority already booked this slot.");
-                        }
+                if (hasConfirmed) {
+                throw new RuntimeException("This time slot has already been booked by another co-owner.");
                 }
 
-                bookingRepository.save(booking);
+                // Thêm booking mới vào danh sách đang cạnh tranh
+                conflicts.add(booking);
+
+                // Tìm người có priority cao nhất
+                Booking topBooking = conflicts.stream()
+                        .max(Comparator.comparing(Booking::getPriorityScore)
+                                .thenComparing(Booking::getCreatedAt))
+                        .orElse(null);
+
+                for (Booking b : conflicts) {
+                if (b.equals(topBooking)) {
+                        b.setBookingStatus(BookingStatus.Confirmed);
+                } else {
+                        b.setBookingStatus(BookingStatus.Cancelled);
+                }
+                bookingRepository.save(b);
+                }
+
+                // Nếu booking của user hiện tại là người thắng
+                if (topBooking.equals(booking)) {
                 return mapToResponse(booking);
+                } else {
+                throw new RuntimeException("Your booking was not confirmed. A co-owner with higher priority won this slot.");
+                }
+
         }
 
         // ====================== GET BOOKINGS ======================
@@ -122,6 +120,17 @@ if (hasConfirmed) {
                                 .map(this::mapToResponse)
                                 .collect(Collectors.toList());
         }
+//offer them cua phu
+        public List<BookingResponse> getBookingsByVehicle(Authentication authentication, Long vehicleId) {
+    User user = userRepository.findByEmail(authentication.getName())
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    return bookingRepository.findAll().stream()
+            .filter(b -> b.getVehicle().getVehicleId().equals(vehicleId))
+            .filter(b -> !b.isDeleted())
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+}
 
         public List<BookingResponse> getMyBookings(Authentication authentication) {
                                 User user = userRepository.findByEmail(authentication.getName())
