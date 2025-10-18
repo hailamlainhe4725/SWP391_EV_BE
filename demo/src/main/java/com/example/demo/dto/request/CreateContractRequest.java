@@ -3,6 +3,8 @@ package com.example.demo.dto.request;
 import lombok.Data;
 import java.time.LocalDate;
 
+import com.example.demo.enums.ContractStatus;
+
 @Data
 public class CreateContractRequest {
     private Long vehicleId;
@@ -10,4 +12,5 @@ public class CreateContractRequest {
     private Double salePercentage;
     private LocalDate startDate;
     private LocalDate endDate;
+    private ContractStatus status;
 }

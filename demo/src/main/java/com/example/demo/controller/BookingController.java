@@ -42,16 +42,16 @@ public class BookingController {
     }
 
     
-//phu offer them tim booking theo id xe
-    @GetMapping("/byVehicle/{vehicleId}")
-@PreAuthorize("hasRole('USER')")
-public ResponseEntity<List<BookingResponse>> getBookingsByVehicle(
-        Authentication auth,
-        @PathVariable Long vehicleId) {
+    //phu offer them tim booking theo id xe
+        @GetMapping("/byVehicle/{vehicleId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<BookingResponse>> getBookingsByVehicle(
+            Authentication auth,
+            @PathVariable Long vehicleId) {
 
-    List<BookingResponse> bookings = bookingService.getBookingsByVehicle(auth, vehicleId);
-    return ResponseEntity.ok(bookings);
-}
+        List<BookingResponse> bookings = bookingService.getBookingsByVehicle(auth, vehicleId);
+        return ResponseEntity.ok(bookings);
+    }
     // Hủy booking (nếu chưa bắt đầu)
     @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/{bookingId}")
@@ -59,6 +59,7 @@ public ResponseEntity<List<BookingResponse>> getBookingsByVehicle(
         bookingService.cancelBooking(bookingId);
         return ResponseEntity.ok("Booking cancelled successfully");
     }
+
 
     // ===== STAFF API =====
 
