@@ -10,6 +10,7 @@ import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.*;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -142,6 +143,14 @@ public class BookingService {
                                 .filter(b -> !b.isDeleted())
                                 .map(this::mapToResponse)
                                 .collect(Collectors.toList());
+        }
+
+        public List<BookingResponse> getScheduleByVehicle( Long vehicleId){
+                return bookingRepository.findAll().stream()
+                .filter(b -> b.getVehicle().getVehicleId().equals(vehicleId))
+                .filter(b -> b.getBookingStatus() != BookingStatus.Cancelled)
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
         }
 
         // ====================== UPDATE STATUS ======================

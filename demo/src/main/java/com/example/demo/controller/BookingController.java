@@ -32,7 +32,7 @@ public class BookingController {
     }
 
 
-
+  
 
     // Xem các booking của chính user
     @PreAuthorize("hasRole('USER')")
@@ -78,4 +78,11 @@ public class BookingController {
     public ResponseEntity<BookingResponse> updateStatus(@RequestBody UpdateStatusBookingRequest req) {
         return ResponseEntity.ok(bookingService.updateBookingStatus(req));
     }
+
+    @GetMapping("/vehicle/{vehicleId}/schedule")
+public ResponseEntity<List<BookingResponse>> getVehicleSchedule(@PathVariable Long vehicleId) {
+    List<BookingResponse> schedules = bookingService.getScheduleByVehicle(vehicleId);
+    return ResponseEntity.ok(schedules);
+}
+
 }

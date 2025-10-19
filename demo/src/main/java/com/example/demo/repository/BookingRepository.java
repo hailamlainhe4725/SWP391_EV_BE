@@ -3,6 +3,7 @@ package com.example.demo.repository;
 import com.example.demo.entity.Booking;
 import com.example.demo.entity.User;
 import com.example.demo.entity.Vehicle;
+import com.example.demo.enums.BookingStatus;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
@@ -43,5 +45,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
   Double getUsedDaysThisMonth(Long userId, Long vehicleId);
 
   List<Booking> findByUserAndVehicleAndStartTimeAfter(User user, Vehicle vehicle, LocalDateTime now);
+
+  List<Booking> findByVehicle_VehicleIdAndBookingStatusNot(Long vehicleId, BookingStatus cancelled);
 
 }
