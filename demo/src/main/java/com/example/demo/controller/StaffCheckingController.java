@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.request.CreateStaffCheckingRequest;
+import com.example.demo.dto.request.StaffCheckingConfirmRequest;
 import com.example.demo.dto.response.StaffCheckingResponse;
 import com.example.demo.service.StaffCheckingService;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +44,15 @@ public class StaffCheckingController {
     public ResponseEntity<StaffCheckingResponse> create(Authentication authentication,@RequestBody CreateStaffCheckingRequest req) {
         return ResponseEntity.ok(staffCheckingService.create(authentication,req));
     }
+    @PreAuthorize("hasRole('USER')")
+@PostMapping("/{id}/confirm")
+public ResponseEntity<StaffCheckingResponse> confirm(
+        Authentication authentication,
+        @PathVariable Long id,
+        @RequestBody StaffCheckingConfirmRequest req
+) {
+    return ResponseEntity.ok(staffCheckingService.confirm(authentication, id, req));
+}
 
     @PreAuthorize("hasRole('STAFF')")
     @DeleteMapping("/{id}")

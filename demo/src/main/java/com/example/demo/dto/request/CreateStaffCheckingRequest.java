@@ -1,5 +1,6 @@
 package com.example.demo.dto.request;
 
+import com.example.demo.enums.CheckingStatus;
 import com.example.demo.enums.StaffCheckingType;
 
 import lombok.*;
@@ -20,4 +21,7 @@ public class CreateStaffCheckingRequest {
     Double batteryPercent;
     Boolean damageReported;
     String notes;
+    CheckingStatus status; // PENDING, CONFIRMED, REJECTED
+     String userComment; // ghi chú của user khi reject
+
 }

@@ -1,9 +1,11 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.request.CreateStaffCheckingRequest;
+import com.example.demo.dto.request.StaffCheckingConfirmRequest;
 import com.example.demo.dto.response.StaffCheckingResponse;
 import com.example.demo.entity.*;
 import com.example.demo.enums.BookingStatus;
+import com.example.demo.enums.CheckingStatus;
 import com.example.demo.enums.StaffCheckingType;
 import com.example.demo.enums.VariableFeeType;
 import com.example.demo.exception.ResourceNotFoundException;
@@ -12,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -55,164 +58,137 @@ public class StaffCheckingService {
                 .collect(Collectors.toList());
         }
 
-        // === Staff tạo CheckIn hoặc CheckOut ===
-        public StaffCheckingResponse create(Authentication authentication,CreateStaffCheckingRequest req) {
-                Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
-                User staff = userRepository.findByEmail(authentication.getName())
-                                .orElseThrow(() -> new ResourceNotFoundException("staff not found"));
-                User user = userRepository.findByEmail(req.getUserEmail())
-                                .orElseThrow(() -> new ResourceNotFoundException("user not found"));
-                Booking booking = bookingRepository.findById(req.getBookingId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-                Ownership ownership = ownershipRepository
-                                .findByUser_IdAndVehicle_VehicleId(user.getId(), vehicle.getVehicleId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Ownership not found"));
+       public StaffCheckingResponse create(Authentication authentication, CreateStaffCheckingRequest req) {
+    // 🔹 Lấy thông tin staff từ token đăng nhập (email)
+    String staffEmail = authentication.getName();
+    User staff = userRepository.findByEmail(staffEmail)
+            .orElseThrow(() -> new RuntimeException("Staff not found with email: " + staffEmail));
 
-                StaffCheckingType type = req.getStaffCheckingType();
+    // 🔹 Lấy vehicle
+    Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
+            .orElseThrow(() -> new RuntimeException("Vehicle not found"));
 
-                // Lấy các lần check trước đó
-                List<StaffChecking> existing = staffCheckingRepository.findByBookingAndDeletedFalse(booking);
-                System.out.printf("chua loi");
-                // === CASE 1: CheckOut (staff giao xe) ===
-                if (type == StaffCheckingType.CheckOut) {
-                        boolean hasCheckOut = existing.stream()
-                                        .anyMatch(c -> c.getType() == StaffCheckingType.CheckOut);
-                        if (hasCheckOut)
-                                throw new RuntimeException("This booking has already been checked out.");
+    // 🔹 Lấy booking
+    Booking booking = bookingRepository.findById(req.getBookingId())
+            .orElseThrow(() -> new RuntimeException("Booking not found"));
 
-                        StaffChecking checkOut = StaffChecking.builder()
-                                        .vehicle(vehicle)
-                                        .user(user)
-                                        .staff(staff)
-                                        .booking(booking)
-                                        .type(StaffCheckingType.CheckOut)
-                                        .odometer(req.getOdometer())
-                                        .batteryPercent(req.getBatteryPercent())
-                                        .damageReported(req.getDamageReported())
-                                        .notes(req.getNotes())
-                                        .checkTime(LocalDateTime.now())
-                                        .deleted(false)
-                                        .build();
+    // 🔹 Lấy user (người thuê xe hoặc sở hữu)
+    User user = userRepository.findByEmail(req.getUserEmail())
+            .orElseThrow(() -> new RuntimeException("User not found with email: " + req.getUserEmail()));
 
+    // 🔹 Tạo mới StaffChecking
+    StaffChecking sc = new StaffChecking();
+    sc.setVehicle(vehicle);
+    sc.setBooking(booking);
+    sc.setUser(user);
+    sc.setStaff(staff);
+    sc.setType(req.getStaffCheckingType());
+    sc.setCheckTime(LocalDateTime.now());
+    sc.setOdometer(req.getOdometer());
+    sc.setBatteryPercent(req.getBatteryPercent());
+    sc.setDamageReported(req.getDamageReported());
+    sc.setNotes(req.getNotes());
+    sc.setStatus(CheckingStatus.PENDING);
+    sc.setUserComment(null);
 
-                        staffCheckingRepository.save(checkOut);
+    // 🔹 (Tùy chọn) Nếu muốn lưu ảnh signature sau này thì thêm xử lý upload
+    // if (req.getStaffSignature() != null) { ... }
+        booking.setBookingStatus(BookingStatus.Completed);
+    staffCheckingRepository.save(sc);
 
-                            booking.setBookingStatus(BookingStatus.Completed);
-                                bookingRepository.save(booking);
-                        return mapToResponse(checkOut);
-                }
+    // 🔹 Trả về response
+    return mapToResponse(sc);
+}
 
-                // === CASE 2: CheckIn ===
-                if (type == StaffCheckingType.CheckIn) {
-                        StaffChecking checkout = existing.stream()
-                                        .filter(c -> c.getType() == StaffCheckingType.CheckOut)
-                                        .findFirst()
-                                        .orElseThrow(() -> new RuntimeException(
-                                                        "You must perform CheckOut before CheckIn."));
+        public StaffCheckingResponse confirm(Authentication authentication,Long id,StaffCheckingConfirmRequest req) {
+    User user = userRepository.findByEmail(authentication.getName())
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-                        Double distanceTraveled = (req.getOdometer() != null && checkout.getOdometer() != null)
-                                        ? req.getOdometer() - checkout.getOdometer()
-                                        : null;
+    StaffChecking sc = staffCheckingRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Checking not found"));
 
-                        Double batteryUsed = (req.getBatteryPercent() != null && checkout.getBatteryPercent() != null)
-                                        ? checkout.getBatteryPercent() - req.getBatteryPercent()
-                                        : null;
+    if (!sc.getUser().getId().equals(user.getId())) {
+        throw new RuntimeException("You cannot confirm this record");
+    }
 
-                        System.out.printf("chua loi1");
-                        // --- Cập nhật ownership ---
-                        ownership = ownershipRepository
-                                        .findByUser_IdAndVehicle_VehicleId(user.getId(), vehicle.getVehicleId())
-                                        .orElseThrow(() -> new ResourceNotFoundException("Ownership not found"));
+    if (sc.getStatus() != CheckingStatus.PENDING) {
+        throw new RuntimeException("Already confirmed");
+    }
 
-                        if (distanceTraveled != null) {
-                                ownership.setUsedKmThisMonth(ownership.getUsedKmThisMonth() + distanceTraveled);
-                                  //  Cập nhật ngày sử dụng
-                          ownership.setUsedDaysThisMonth(ownership.getUsedDaysThisMonth() + 1);
-                                ownershipRepository.save(ownership);
-                        }
+    if (req.isApproved()) {
+    sc.setStatus(CheckingStatus.CONFIRMED);
 
-                        double allowedKm = ownership.getAllowedKmThisMonth();
-                        if (ownership.getUsedKmThisMonth() > allowedKm) {
-                                double exceededKm = ownership.getUsedKmThisMonth() - allowedKm;
+    // === Chỉ xử lý khi user đồng ý ===
+    if (sc.getType() == StaffCheckingType.CheckIn) {
+        StaffChecking checkout = staffCheckingRepository
+            .findByBooking_BookingIdAndTypeAndDeletedFalse(sc.getBooking().getBookingId(), StaffCheckingType.CheckOut)
+            .orElseThrow(() -> new RuntimeException("Missing CheckOut record"));
 
-                                // === Tạo phí vượt km ===
-                                VariableFee overKmFee = VariableFee.builder()
-                                                .vehicle(vehicle)
-                                                .user(user)
-                                                .booking(booking)
-                                                .type(VariableFeeType.OverOdometer)
-                                                .amount(exceededKm * vehicle.getOperatingCostPerKm())
-                                                .description("Exceeded allowed kilometers for this month")
-                                                .createdAt(LocalDateTime.now())
-                                                .recordedBy(staff)
-                                                .deleted(false)
-                                                .build();
-                                variableFeeRepository.save(overKmFee);
+        Double distanceTraveled = sc.getOdometer() - checkout.getOdometer();
+        Double batteryUsed = checkout.getBatteryPercent() - sc.getBatteryPercent();
 
-                                // Hủy booking tương lai
-                                List<Booking> future = bookingRepository
-                                                .findByUserAndVehicleAndStartTimeAfter(user, vehicle,
-                                                                LocalDateTime.now());
-                                for (Booking b : future) {
-                                        b.setBookingStatus(com.example.demo.enums.BookingStatus.Cancelled);
-                                }
-                                bookingRepository.saveAll(future);
-                        }
+        Ownership ownership = ownershipRepository
+            .findByUser_IdAndVehicle_VehicleId(sc.getUser().getId(), sc.getVehicle().getVehicleId())
+            .orElseThrow(() -> new ResourceNotFoundException("Ownership not found"));
 
-                        // === Tạo phí hư hại nếu có ===
-                        if (req.getDamageReported() != null && !req.getDamageReported().FALSE) {
-                                VariableFee damageFee = VariableFee.builder()
-                                                .vehicle(vehicle)
-                                                .user(user)
-                                                .booking(booking)
-                                                .type(VariableFeeType.Damage)
-                                                .amount(10000.000) // tạm ước lượng
-                                                .description("Damage reported: " + req.getDamageReported())
-                                                .createdAt(LocalDateTime.now())
-                                                .recordedBy(staff)
-                                                .deleted(false)
-                                                .build();
-                                variableFeeRepository.save(damageFee);
-                        }
+        ownership.setUsedKmThisMonth(ownership.getUsedKmThisMonth() + distanceTraveled);
+        ownership.setUsedDaysThisMonth(ownership.getUsedDaysThisMonth() + 1);
+        ownershipRepository.save(ownership);
 
-                        // === Tạo phí sạc pin cố định (sau mỗi chuyến) ===
-                        VariableFee chargingFee = VariableFee.builder()
-                                        .vehicle(vehicle)
-                                        .user(user)
-                                        .booking(booking)
-                                        .type(VariableFeeType.Charging)
-                                        .amount((batteryUsed / 100) * vehicle.getBatteryCapacityKwh() * 2500) // ví dụ:
-                                                                                                              // VND
-                                        .description("Vehicle battery recharge after trip (100%)")
-                                        .createdAt(LocalDateTime.now())
-                                        .recordedBy(staff)
-                                        .deleted(false)
-                                        .build();
-                        variableFeeRepository.save(chargingFee);
-
-                        // === Tạo CheckIn ===
-                        StaffChecking checkIn = StaffChecking.builder()
-                                        .vehicle(vehicle)
-                                        .user(user)
-                                        .staff(staff)
-                                        .booking(booking)
-                                        .type(StaffCheckingType.CheckIn)
-                                        .odometer(req.getOdometer())
-                                        .batteryPercent(req.getBatteryPercent())
-                                        .damageReported(req.getDamageReported())
-                                        .notes(req.getNotes())
-                                        .distanceTraveled(distanceTraveled)
-                                        .batteryUsedPercent(batteryUsed)
-                                        .deleted(false)
-                                        .build();
-
-                        staffCheckingRepository.save(checkIn);
-                        return mapToResponse(checkIn);
-                }
-
-                throw new RuntimeException("Invalid check type");
+        double allowedKm = ownership.getAllowedKmThisMonth();
+        if (ownership.getUsedKmThisMonth() > allowedKm) {
+            double exceededKm = ownership.getUsedKmThisMonth() - allowedKm;
+            variableFeeRepository.save(VariableFee.builder()
+                .vehicle(sc.getVehicle())
+                .user(sc.getUser())
+                .booking(sc.getBooking())
+                .type(VariableFeeType.OverOdometer)
+                .amount(exceededKm * sc.getVehicle().getOperatingCostPerKm())
+                .description("Exceeded allowed kilometers")
+                .createdAt(LocalDateTime.now())
+                .recordedBy(sc.getStaff())
+                .deleted(false)
+                .build()
+            );
         }
+
+        if (Boolean.TRUE.equals(sc.getDamageReported())) {
+            variableFeeRepository.save(VariableFee.builder()
+                .vehicle(sc.getVehicle())
+                .user(sc.getUser())
+                .booking(sc.getBooking())
+                .type(VariableFeeType.Damage)
+                .amount(10000.0)
+                .description("Damage reported")
+                .createdAt(LocalDateTime.now())
+                .recordedBy(sc.getStaff())
+                .deleted(false)
+                .build()
+            );
+        }
+
+        variableFeeRepository.save(VariableFee.builder()
+            .vehicle(sc.getVehicle())
+            .user(sc.getUser())
+            .booking(sc.getBooking())
+            .type(VariableFeeType.Charging)
+            .amount((batteryUsed / 100) * sc.getVehicle().getBatteryCapacityKwh() * 2500)
+            .description("Battery recharge after trip")
+            .createdAt(LocalDateTime.now())
+            .recordedBy(sc.getStaff())
+            .deleted(false)
+            .build()
+        );
+    }
+} else {
+        sc.setStatus(CheckingStatus.REJECTED);
+        sc.setUserComment(req.getUserComment());
+    }
+
+    staffCheckingRepository.save(sc);
+    return mapToResponse(sc);
+}
+
 
         // === Soft delete
         public void softDelete(Long id) {

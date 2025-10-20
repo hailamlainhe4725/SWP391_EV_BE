@@ -6,6 +6,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 
+import com.example.demo.enums.CheckingStatus;
 import com.example.demo.enums.StaffCheckingType;
 
 @Entity
@@ -57,4 +58,11 @@ public class StaffChecking {
     @Builder.Default
     @Column(name = "deleted")
     boolean deleted = false;
+
+    @Column(nullable = false)
+@Enumerated(EnumType.STRING)
+private CheckingStatus status; // PENDING, CONFIRMED, REJECTED
+
+private String userComment; // ghi chú của user khi reject
+
 }
