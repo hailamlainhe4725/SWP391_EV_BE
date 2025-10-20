@@ -7,6 +7,8 @@ import java.util.List;
 
 import com.example.demo.enums.BillingStatus;
 
+import jakarta.persistence.Column;
+
 @Getter
 @Setter
 @Builder
@@ -22,4 +24,9 @@ public class InvoiceResponse {
     LocalDateTime issuedDate;
     LocalDateTime dueDate;
     List<InvoiceDetailResponse> details;
+    String fullName;
+    String email;
+    String phone;
+        String model;
+    String plateNumber;
 }

@@ -79,6 +79,9 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.updateBookingStatus(req));
     }
 
+
+    
+    @PreAuthorize("hasRole('USER')")
     @GetMapping("/vehicle/{vehicleId}/schedule")
 public ResponseEntity<List<BookingResponse>> getVehicleSchedule(@PathVariable Long vehicleId) {
     List<BookingResponse> schedules = bookingService.getScheduleByVehicle(vehicleId);

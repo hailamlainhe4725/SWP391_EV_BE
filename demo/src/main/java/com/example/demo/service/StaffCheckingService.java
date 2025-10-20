@@ -10,7 +10,6 @@ import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.*;
 import lombok.RequiredArgsConstructor;
 
-import com.example.demo.entity.User;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -128,6 +127,8 @@ public class StaffCheckingService {
 
                         if (distanceTraveled != null) {
                                 ownership.setUsedKmThisMonth(ownership.getUsedKmThisMonth() + distanceTraveled);
+                                  //  Cập nhật ngày sử dụng
+                          ownership.setUsedDaysThisMonth(ownership.getUsedDaysThisMonth() + 1);
                                 ownershipRepository.save(ownership);
                         }
 

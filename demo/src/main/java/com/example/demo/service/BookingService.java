@@ -81,7 +81,7 @@ public class BookingService {
 
                                 // Nếu đã có booking được Confirmed → chặn luôn
                 boolean hasConfirmed = conflicts.stream()
-                        .anyMatch(b -> b.getBookingStatus() == BookingStatus.Confirmed);
+                        .anyMatch(b -> b.getBookingStatus() == BookingStatus.Confirmed ||b.getBookingStatus() == BookingStatus.Completed );
 
                 if (hasConfirmed) {
                 throw new RuntimeException("This time slot has already been booked by another co-owner.");
@@ -98,7 +98,7 @@ public class BookingService {
 
                 for (Booking b : conflicts) {
                 if (b.equals(topBooking)) {
-                        b.setBookingStatus(BookingStatus.Confirmed);
+                        b.setBookingStatus(BookingStatus.Pending);
                 } else {
                         b.setBookingStatus(BookingStatus.Cancelled);
                 }
@@ -146,11 +146,12 @@ public class BookingService {
         }
 
         public List<BookingResponse> getScheduleByVehicle( Long vehicleId){
-                return bookingRepository.findAll().stream()
-                .filter(b -> b.getVehicle().getVehicleId().equals(vehicleId))
-                .filter(b -> b.getBookingStatus() != BookingStatus.Cancelled)
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+        
+        return bookingRepository.findByVehicle_VehicleIdAndBookingStatusNot(vehicleId, BookingStatus.Cancelled)
+        .stream()
+        .map(this::mapToResponse)
+        .collect(Collectors.toList());
+
         }
 
         // ====================== UPDATE STATUS ======================
