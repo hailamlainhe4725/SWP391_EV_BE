@@ -11,6 +11,7 @@ public class BookingResponse {
     Long vehicleId;
     String vehicleName;
     String userName;
+    String userEmail;
     String bookingStatus;
     Double priorityScore;
     LocalDateTime startTime;

@@ -198,6 +198,7 @@ public class BookingService {
                                 .vehicleId(b.getVehicle().getVehicleId())
                                 .vehicleName(b.getVehicle().getBrand() + " " + b.getVehicle().getModel())
                                 .userName(b.getUser().getFullName())
+                                .userEmail(b.getUser().getEmail())
                                 .startTime(b.getStartTime())
                                 .endTime(b.getEndTime())
                                 .bookingStatus(b.getBookingStatus().name())

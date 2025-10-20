@@ -17,9 +17,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -76,6 +83,29 @@ private JwtUtils jwtUtils;
         }
         userRepository.save(user);
         return mapToResponse(user);
+    }
+
+    public String uploadSignature(MultipartFile file, Authentication auth) {
+        User user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        try {
+            String uploadDir = "uploads/signatures/";
+            File dir = new File(uploadDir);
+            if (!dir.exists()) dir.mkdirs();
+
+            String fileName = user.getId() + "_" + file.getOriginalFilename();
+            Path path = Paths.get(uploadDir + fileName);
+            Files.write(path, file.getBytes());
+
+            String url = "/uploads/signatures/" + fileName;
+            user.setSignatureImageUrl(url);
+            userRepository.save(user);
+
+            return url;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload signature", e);
+        }
     }
 
     // ===== Update =====

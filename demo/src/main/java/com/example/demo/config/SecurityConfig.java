@@ -29,6 +29,7 @@ public class SecurityConfig {
                 .cors(cors -> {}) // cho phép CORS mặc định
 
                 .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/uploads/**").permitAll()
     .requestMatchers("/api/users/auth", "/api/users/login", "/api/users/register",
                      "/swagger-ui/**", "/v3/api-docs/**","/api/vehicles/top4","/api/vehicles/viewAllVehicle").permitAll()
     .anyRequest().authenticated()

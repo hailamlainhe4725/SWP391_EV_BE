@@ -241,6 +241,10 @@ public class StaffCheckingService {
                                 .notes(sc.getNotes())
                                 .distanceTraveled(sc.getDistanceTraveled())
                                 .batteryUsedPercent(sc.getBatteryUsedPercent())
+                                
+                                .userSignature(sc.getUser().getSignatureImageUrl())
+                                .staffSignature(sc.getStaff().getSignatureImageUrl())
+
                                 .build();
         }
 }

@@ -41,4 +41,7 @@ public class User {
     @Column(name = "deleted")
     Boolean deleted = false; // soft delete flag
 
+        @Column(name = "signature_image_url")
+    String signatureImageUrl; // URL chữ ký số
+
 }

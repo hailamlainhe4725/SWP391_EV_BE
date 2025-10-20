@@ -9,4 +9,5 @@ public class CreateUserRequest {
     private String phone;
     private String password;
     private String role; // USER hoặc STAFF
+    private String signatureImageUrl;
 }

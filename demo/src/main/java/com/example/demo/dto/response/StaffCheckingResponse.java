@@ -30,4 +30,7 @@ public class StaffCheckingResponse {
     String notes;
     Double distanceTraveled;
     Double batteryUsedPercent;
+
+        String userSignature;
+    String staffSignature;
 }

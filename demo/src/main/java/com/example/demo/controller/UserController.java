@@ -1,6 +1,4 @@
 package com.example.demo.controller;
-import org.springframework.web.bind.annotation.PostMapping;
-
 import com.example.demo.dto.request.*;
 import com.example.demo.dto.response.*;
 import com.example.demo.service.UserService;
@@ -9,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import jakarta.validation.Valid;
 import java.util.List;
 
@@ -23,6 +23,13 @@ public class UserController {
     public ResponseEntity<UserResponse> register(@Valid @RequestBody CreateUserRequest req) {
         UserResponse created = userService.create(req);
         return ResponseEntity.ok(created);
+    }
+    @PreAuthorize("hasAnyRole('USER','STAFF')")
+    @PostMapping("/upload-signature")
+    public ResponseEntity<String> uploadSignature(
+            @RequestParam("file") MultipartFile file,
+            Authentication auth) {
+        return ResponseEntity.ok(userService.uploadSignature(file, auth));
     }
 
     @PostMapping("/login") // login endpoint (returns token via AuthResponse)
