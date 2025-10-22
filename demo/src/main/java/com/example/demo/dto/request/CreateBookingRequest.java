@@ -16,4 +16,8 @@ public class CreateBookingRequest {
     @NotNull
     LocalDateTime startTime;
 
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @NotNull
+    LocalDateTime endTime;
+
 }

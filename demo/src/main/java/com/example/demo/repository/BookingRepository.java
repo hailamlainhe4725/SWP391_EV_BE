@@ -7,6 +7,7 @@ import com.example.demo.enums.BookingStatus;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -31,18 +32,34 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
       """)
   List<Booking> findConflictingBookings(Long vehicleId, LocalDateTime startTime, LocalDateTime endTime);
 
-  // Tổng số ngày user đã sử dụng trong tháng
-  @Query(value = """
-          SELECT COALESCE(SUM(DATEDIFF(end_time, start_time)), 0)
-          FROM booking
-          WHERE user_id = :userId
-            AND vehicle_id = :vehicleId
-            AND MONTH(start_time) = MONTH(CURDATE())
-            AND YEAR(start_time) = YEAR(CURDATE())
-            AND booking_status = 'COMPLETED'
-            AND deleted = false
-      """, nativeQuery = true)
-  Double getUsedDaysThisMonth(Long userId, Long vehicleId);
+@Query(value = """
+    SELECT 
+        SUM(
+            DATEDIFF(
+                LEAST(
+                   
+                    b.end_time,
+                    LAST_DAY(CURDATE())
+                ),
+                GREATEST(
+                   
+                    b.start_time,
+                    DATE_FORMAT(CURDATE(), '%Y-%m-01')
+                )
+            ) + 1
+        ) AS UsedDays
+    FROM booking b
+    WHERE b.user_id = :userId
+      AND b.vehicle_id = :vehicleId
+      AND b.booking_status IN ('Confirmed', 'Completed')
+      AND b.deleted = 0
+      
+      AND b.end_time >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+      AND b.start_time <= LAST_DAY(CURDATE())
+""", nativeQuery = true)
+Double getUsedDaysThisMonth(Long userId, Long vehicleId);
+
+
 
   List<Booking> findByUserAndVehicleAndStartTimeAfter(User user, Vehicle vehicle, LocalDateTime now);
 

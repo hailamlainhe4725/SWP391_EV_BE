@@ -29,4 +29,5 @@ public class InvoiceResponse {
     String phone;
         String model;
     String plateNumber;
+    String note;
 }

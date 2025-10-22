@@ -45,8 +45,13 @@ public class BookingService {
                         throw new RuntimeException(
                                         "You have exceeded your monthly km limit for this vehicle. Booking blocked.");
                 }
+                    
+                if (!req.getEndTime().isAfter(req.getStartTime())) {
+                        throw new RuntimeException("End time must be after start time.");
+                        }
                 // Giới hạn ngày sử dụng trong tháng
-                double usedDays = bookingRepository.getUsedDaysThisMonth(user.getId(), vehicle.getVehicleId());
+                Double usedDaysRaw = bookingRepository.getUsedDaysThisMonth(user.getId(), vehicle.getVehicleId());
+                double usedDays = (usedDaysRaw != null) ? usedDaysRaw : 0.0;
                 double allowedDays = 30 * (ownership.getTotalSharePercentage() / 100.0);
                 double usageRatio = usedDays / allowedDays;
 
@@ -57,35 +62,31 @@ public class BookingService {
                 if (req.getStartTime().isBefore(LocalDateTime.now())) {
                 throw new RuntimeException("Cannot create booking in the past.");
                 }
-                // Đặt thời gian cố định (1AM - 11PM)
-                LocalDateTime bookingDate = req.getStartTime().toLocalDate().atStartOfDay();
-                LocalDateTime startTime = bookingDate.plusHours(1); // 01:00 AM
-                LocalDateTime endTime = bookingDate.plusHours(23); // 11:00 PM
-
                 // Tính điểm ưu tiên
                 double priorityScore = ownership.getTotalSharePercentage() / (1 + usedDays);
 
-                Booking booking = Booking.builder()
-                                .user(user)
-                                .vehicle(vehicle)
-                                .startTime(startTime)
-                                .endTime(endTime)
-                                .bookingStatus(BookingStatus.Pending)
-                                .priorityScore(priorityScore)
-                                .deleted(false)
-                                .build();
 
                 // Tìm các booking trùng thời gian
                 List<Booking> conflicts = bookingRepository.findConflictingBookings(
-                                vehicle.getVehicleId(), startTime, endTime);
+                                vehicle.getVehicleId(), req.getStartTime(), req.getEndTime());
 
                                 // Nếu đã có booking được Confirmed → chặn luôn
                 boolean hasConfirmed = conflicts.stream()
-                        .anyMatch(b -> b.getBookingStatus() == BookingStatus.Confirmed ||b.getBookingStatus() == BookingStatus.Completed );
+                        .anyMatch(b -> b.getBookingStatus() == BookingStatus.Confirmed ||b.getBookingStatus() == BookingStatus.Completed||b.getBookingStatus() == BookingStatus.InProgress );
 
                 if (hasConfirmed) {
                 throw new RuntimeException("This time slot has already been booked by another co-owner.");
                 }
+                                Booking booking = Booking.builder()
+                                .user(user)
+                                .vehicle(vehicle)
+                                .startTime(req.getStartTime())
+                                .endTime(req.getEndTime())
+                                .bookingStatus(BookingStatus.Pending)
+                                .priorityScore(priorityScore)
+                                .deleted(false)
+                                .createdAt(LocalDateTime.now())
+                                .build();
 
                 // Thêm booking mới vào danh sách đang cạnh tranh
                 conflicts.add(booking);

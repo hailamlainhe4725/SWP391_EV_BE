@@ -3,6 +3,7 @@ package com.example.demo.service;
 import com.example.demo.dto.request.CreateInvoiceRequest;
 import com.example.demo.dto.response.InvoiceDetailResponse;
 import com.example.demo.dto.response.InvoiceResponse;
+import com.example.demo.dto.response.MonthlyInvoiceSummaryResponse;
 import com.example.demo.entity.*;
 import com.example.demo.enums.BillingStatus;
 import com.example.demo.exception.ResourceNotFoundException;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,29 +31,58 @@ public class InvoiceService {
     private final VehicleRepository vehicleRepository;
     private final FixedFeeRepository fixedFeeRepository;
     private final VariableFeeRepository variableFeeRepository;
+    private final OwnershipRepository ownershipRepository;
 
     /**
      * Tạo hóa đơn tự động — chỉ cần userId và vehicleId.
      * Toàn bộ fee sẽ được lấy tự động từ bảng FixedFee và VariableFee.
      */
-    public InvoiceResponse createAutoInvoice(CreateInvoiceRequest req) {
 
-        User user = userRepository.findById(req.getUserId())
+     public List<InvoiceResponse> createAutoInvoicesByEmail(String email) {
+    User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    // Lấy danh sách Ownership (vehicle mà user này sở hữu)
+    List<Ownership> ownerships = ownershipRepository.findByUser_IdAndDeletedFalse(user.getId());
+    if (ownerships.isEmpty()) {
+        throw new RuntimeException("User does not own any vehicles.");
+    }
+
+    List<InvoiceResponse> responses = new ArrayList<>();
+
+    for (Ownership own : ownerships) {
+        Vehicle vehicle = own.getVehicle();
+        // Gọi lại method gốc
+        InvoiceResponse response = createAutoInvoice(user.getId(),vehicle.getVehicleId(),("Auto-generated monthly invoice for " + vehicle.getModel()+vehicle.getPlateNumber()));
+        responses.add(response);
+    }
+
+    return responses;
+}
+
+    public InvoiceResponse createAutoInvoice(Long userId,Long vehicleId,String note) {
+
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
 
          // Xác định đầu và cuối tháng hiện tại
     LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
-    LocalDateTime endOfMonth = startOfMonth.plusMonths(1);
-        
+    LocalDateTime endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth()).atTime(23,59,59);
+        boolean exists = invoiceRepository.existsByUserAndVehicleAndIssuedDateBetween(
+    user, vehicle, startOfMonth, endOfMonth
+);
+if (exists) {
+    throw new RuntimeException("Invoice for this month already exists.");
+}
     Invoice invoice = Invoice.builder()
                 .user(user)
                 .vehicle(vehicle)
                 .status(BillingStatus.OPEN)
                 .issuedDate(LocalDateTime.now())
                 .dueDate(LocalDateTime.now().plusDays(7))
-                .note(req.getNote())
+                .note(note)
                 .totalAmount(0.0)
                 .build();
 
@@ -104,13 +136,39 @@ public class InvoiceService {
                 .collect(Collectors.toList());
     }
 
-        public List<InvoiceResponse> getMyInvoice(Authentication authentication) {
-             User user = userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        return getAllInvoices().stream()
-                        .filter(i -> i.getUserId().equals(user.getId()))
-                        .toList();
+
+public MonthlyInvoiceSummaryResponse getMyInvoice(Authentication authentication, YearMonth targetMonth) {
+    User user = userRepository.findByEmail(authentication.getName())
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    // Nếu frontend không truyền month, mặc định là tháng hiện tại
+    if (targetMonth == null) {
+        targetMonth = YearMonth.now();
     }
+
+    // Xác định đầu và cuối tháng
+    LocalDateTime startOfMonth = targetMonth.atDay(1).atStartOfDay();
+    LocalDateTime endOfMonth = targetMonth.atEndOfMonth().atTime(23, 59, 59);
+
+    // Lấy tất cả hóa đơn của user trong tháng này
+    List<InvoiceResponse> userInvoices = getAllInvoices().stream()
+            .filter(i -> i.getUserId().equals(user.getId()))
+            .filter(i -> !i.getIssuedDate().isBefore(startOfMonth) && !i.getIssuedDate().isAfter(endOfMonth))
+            .toList();
+
+    // Tính tổng tiền
+    double total = userInvoices.stream()
+            .mapToDouble(InvoiceResponse::getTotalAmount)
+            .sum();
+
+    // Trả về kết quả tổng hợp
+    return MonthlyInvoiceSummaryResponse.builder()
+            .userName(user.getFullName())
+            .month(targetMonth.toString()) // ví dụ "2025-10"
+            .totalAmount(total)
+            .invoices(userInvoices)
+            .build();
+}
 
     
    private InvoiceResponse mapToResponse(Invoice invoice) {

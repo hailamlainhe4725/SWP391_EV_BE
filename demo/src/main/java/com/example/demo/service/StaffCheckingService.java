@@ -17,7 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -58,25 +60,50 @@ public class StaffCheckingService {
                 .collect(Collectors.toList());
         }
 
-       public StaffCheckingResponse create(Authentication authentication, CreateStaffCheckingRequest req) {
-    // 🔹 Lấy thông tin staff từ token đăng nhập (email)
+      public StaffCheckingResponse create(Authentication authentication, CreateStaffCheckingRequest req) {
+    // 1. Lấy thông tin Staff từ token
     String staffEmail = authentication.getName();
     User staff = userRepository.findByEmail(staffEmail)
             .orElseThrow(() -> new RuntimeException("Staff not found with email: " + staffEmail));
 
-    // 🔹 Lấy vehicle
+    //  2. Lấy vehicle và booking
     Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
             .orElseThrow(() -> new RuntimeException("Vehicle not found"));
 
-    // 🔹 Lấy booking
     Booking booking = bookingRepository.findById(req.getBookingId())
             .orElseThrow(() -> new RuntimeException("Booking not found"));
 
-    // 🔹 Lấy user (người thuê xe hoặc sở hữu)
+    //  3. Lấy user (người thuê xe hoặc sở hữu)
     User user = userRepository.findByEmail(req.getUserEmail())
             .orElseThrow(() -> new RuntimeException("User not found with email: " + req.getUserEmail()));
 
-    // 🔹 Tạo mới StaffChecking
+    //  4. Kiểm tra trạng thái booking — phải được Confirm trước
+    if (booking.getBookingStatus() != BookingStatus.InProgress) {
+    if (booking.getBookingStatus() != BookingStatus.Confirmed) {
+        throw new RuntimeException("Booking must be confirmed before staff checking.");
+    }
+    }
+    // 5. Kiểm tra đã tồn tại loại checking này hay chưa
+    Optional<StaffChecking> existing = staffCheckingRepository
+            .findByBooking_BookingIdAndTypeAndDeletedFalse(booking.getBookingId(), req.getStaffCheckingType());
+    if (existing.isPresent()) {
+        throw new RuntimeException("A checking of this type already exists for this booking.");
+    }
+
+    //  6. Nếu là CheckIn → bắt buộc phải có CheckOut đã được CONFIRMED trước đó
+    if (req.getStaffCheckingType() == StaffCheckingType.CheckIn) {
+        Optional<StaffChecking> confirmedCheckout = staffCheckingRepository
+                .findByBooking_BookingIdAndTypeAndStatusAndDeletedFalse(
+                        booking.getBookingId(),
+                        StaffCheckingType.CheckOut,
+                        CheckingStatus.CONFIRMED
+                );
+        if (confirmedCheckout.isEmpty()) {
+            throw new RuntimeException("Cannot perform Check-In before Check-Out has been confirmed.");
+        }
+    }
+
+    // 🔹 7. Tạo mới StaffChecking
     StaffChecking sc = new StaffChecking();
     sc.setVehicle(vehicle);
     sc.setBooking(booking);
@@ -90,15 +117,16 @@ public class StaffCheckingService {
     sc.setNotes(req.getNotes());
     sc.setStatus(CheckingStatus.PENDING);
     sc.setUserComment(null);
-
-    // 🔹 (Tùy chọn) Nếu muốn lưu ảnh signature sau này thì thêm xử lý upload
-    // if (req.getStaffSignature() != null) { ... }
-        booking.setBookingStatus(BookingStatus.Completed);
     staffCheckingRepository.save(sc);
 
-    // 🔹 Trả về response
+
+
+    // 🔹 9. Trả về response
     return mapToResponse(sc);
-}
+    }
+
+
+
 
         public StaffCheckingResponse confirm(Authentication authentication,Long id,StaffCheckingConfirmRequest req) {
     User user = userRepository.findByEmail(authentication.getName())
@@ -114,9 +142,18 @@ public class StaffCheckingService {
     if (sc.getStatus() != CheckingStatus.PENDING) {
         throw new RuntimeException("Already confirmed");
     }
-
+    Booking booking = sc.getBooking();
     if (req.isApproved()) {
     sc.setStatus(CheckingStatus.CONFIRMED);
+
+        // 🔹 8. Cập nhật trạng thái booking nếu cần
+    if (sc.getType() == StaffCheckingType.CheckOut) {
+        booking.setBookingStatus(BookingStatus.InProgress);
+        bookingRepository.save(booking);
+    } else if (sc.getType() ==  StaffCheckingType.CheckIn) {
+        booking.setBookingStatus(BookingStatus.Completed);
+        bookingRepository.save(booking);
+    }
 
     // === Chỉ xử lý khi user đồng ý ===
     if (sc.getType() == StaffCheckingType.CheckIn) {
@@ -132,7 +169,13 @@ public class StaffCheckingService {
             .orElseThrow(() -> new ResourceNotFoundException("Ownership not found"));
 
         ownership.setUsedKmThisMonth(ownership.getUsedKmThisMonth() + distanceTraveled);
-        ownership.setUsedDaysThisMonth(ownership.getUsedDaysThisMonth() + 1);
+            
+        long daysUsed = ChronoUnit.DAYS.between(
+        booking.getStartTime().toLocalDate(),
+        booking.getEndTime().toLocalDate()
+    ) + 1; // +1 nếu muốn tính inclusive
+
+    ownership.setUsedDaysThisMonth(ownership.getUsedDaysThisMonth() + daysUsed);
         ownershipRepository.save(ownership);
 
         double allowedKm = ownership.getAllowedKmThisMonth();
@@ -142,6 +185,7 @@ public class StaffCheckingService {
                 .vehicle(sc.getVehicle())
                 .user(sc.getUser())
                 .booking(sc.getBooking())
+                .staffChecking(sc)
                 .type(VariableFeeType.OverOdometer)
                 .amount(exceededKm * sc.getVehicle().getOperatingCostPerKm())
                 .description("Exceeded allowed kilometers")
@@ -157,6 +201,7 @@ public class StaffCheckingService {
                 .vehicle(sc.getVehicle())
                 .user(sc.getUser())
                 .booking(sc.getBooking())
+                .staffChecking(sc)
                 .type(VariableFeeType.Damage)
                 .amount(10000.0)
                 .description("Damage reported")
@@ -171,6 +216,7 @@ public class StaffCheckingService {
             .vehicle(sc.getVehicle())
             .user(sc.getUser())
             .booking(sc.getBooking())
+            .staffChecking(sc)
             .type(VariableFeeType.Charging)
             .amount((batteryUsed / 100) * sc.getVehicle().getBatteryCapacityKwh() * 2500)
             .description("Battery recharge after trip")
