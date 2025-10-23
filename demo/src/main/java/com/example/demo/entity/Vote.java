@@ -41,9 +41,10 @@ public class Vote {
     User user;
 
     @ManyToOne
-    @JoinColumn(name = "ownership_id", nullable = false)
-    Ownership ownership;
+    @JoinColumn(name = "vehicle_id", nullable = false)
+    Vehicle vehicle;
 
+    Double percentCoOwner;
     Boolean choice; // true = đồng ý, false = không
 
     LocalDateTime votedAt = LocalDateTime.now();

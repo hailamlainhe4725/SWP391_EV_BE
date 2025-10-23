@@ -48,8 +48,8 @@ public class VoteTopic {
     User createdBy;
 
     @ManyToOne
-    @JoinColumn(name = "ownership_id")
-    Ownership ownership;
+    @JoinColumn(name= "vehicle_id")
+    Vehicle vehicle;
 
     Double requiredRatio; // 0.5 cho Medium, 0.75 cho Major...
 

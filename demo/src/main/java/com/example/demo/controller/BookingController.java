@@ -37,8 +37,8 @@ public class BookingController {
     // Xem các booking của chính user
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/my")
-    public ResponseEntity<List<BookingResponse>> getMyBookings(Authentication auth) {
-        List<BookingResponse> res = bookingService.getMyBookings(auth);
+    public ResponseEntity<List<BookingVehicleResponse>> getMyBookings(Authentication auth) {
+        List<BookingVehicleResponse> res = bookingService.getMyBookings(auth);
         return ResponseEntity.ok(res);
     }
 

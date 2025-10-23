@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,11 +24,12 @@ public class VoteService {
         private final VoteTopicRepository voteTopicRepository;
         private final OwnershipRepository ownershipRepository;
         private final UserRepository userRepository;
+        private final VehicleRepository vehicleRepository;
         
 
         // ====== Tạo chủ đề biểu quyết ======
         public VoteTopicResponse createTopic(Authentication authentication,CreateVoteTopicRequest req) {
-                Ownership ownership = ownershipRepository.findById(req.getOwnershipId())
+                Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
                                 .orElseThrow(() -> new RuntimeException("Ownership not found"));
                 User creator = userRepository.findByEmail(authentication.getName())
                                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -42,7 +44,7 @@ public class VoteService {
                                 .title(req.getTitle())
                                 .description(req.getDescription())
                                 .decisionType(req.getDecisionType())
-                                .ownership(ownership)
+                                .vehicle(vehicle)
                                 .createdBy(creator)
                                 .requiredRatio(ratio)
                                 .status(VoteStatus.PENDING)
@@ -59,26 +61,35 @@ public class VoteService {
                                 .collect(Collectors.toList());
         }
 
-                public List<VoteTopicResponse> getUserTopic(
-        Authentication authentication){
-                                      User user = userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        public List<VoteTopicResponse> getUserTopic(Authentication authentication) {
+    // Lấy thông tin user từ token
+    User user = userRepository.findByEmail(authentication.getName())
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // Lấy tất cả ownership mà user này tham gia
-        List<Ownership> ownerships = ownershipRepository.findByUserAndDeletedFalse(user);
+    // Lấy tất cả ownership mà user này tham gia
+    List<Ownership> ownerships = ownershipRepository.findByUserAndDeletedFalse(user);
+    if (ownerships.isEmpty()) {
+        throw new ResourceNotFoundException("User does not own any vehicles or groups");
+    }
 
-        if (ownerships.isEmpty()) {
-            throw new ResourceNotFoundException("User does not own any vehicles or groups");
+    // Lấy tất cả vehicle tương ứng với ownerships
+    List<Vehicle> vehicles = new ArrayList<>();
+ for (Ownership o : ownerships) {
+        if (o.getVehicle() != null) {
+            vehicles.add(o.getVehicle());
         }
+    }
 
-        // Lấy tất cả voteTopic của các ownership đó
-        List<VoteTopic> allTopics = voteTopicRepository.findByOwnershipIn(ownerships);
+    // Lấy tất cả voteTopic của các  vehicle này)
+    List<VoteTopic> allTopics = voteTopicRepository.findByVehicleIn(vehicles);
 
-        //Chuyển thành response
-        return allTopics.stream()
-                .map(this::mapTopicToResponse)
-                .collect(Collectors.toList());
-        }
+    // Chuyển thành response (lọc ra những topic chưa bị xóa)
+    return allTopics.stream()
+            .filter(topic -> !topic.isDeleted())
+            .map(this::mapTopicToResponse)
+            .collect(Collectors.toList());
+}
+
         // ====== Người dùng bỏ phiếu ======
         public VoteResponse castVote(Authentication authentication,CreateVoteRequest req) {
                 VoteTopic topic = voteTopicRepository.findById(req.getTopicId())
@@ -87,7 +98,7 @@ public class VoteService {
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 
                 Ownership ownership = ownershipRepository.findByUser_IdAndVehicle_VehicleId(
-                                user.getId(), topic.getOwnership().getVehicle().getVehicleId())
+                                user.getId(), topic.getVehicle().getVehicleId())
                                 .orElseThrow(() -> new RuntimeException("Ownership not found for this vehicle"));
 
                 voteRepository.findByTopicAndUser(topic, user).ifPresent(v -> {
@@ -97,7 +108,8 @@ public class VoteService {
                 Vote vote = Vote.builder()
                                 .topic(topic)
                                 .user(user)
-                                .ownership(ownership)
+                                .percentCoOwner(ownership.getTotalSharePercentage())
+                                .vehicle(topic.getVehicle())
                                 .choice(req.isAgree())
                                 .build();
 
@@ -105,32 +117,50 @@ public class VoteService {
                 return mapVoteToResponse(vote);
         }
 
-        // ====== Tính kết quả ======
-        public VoteTopicResponse calculateResult(Long topicId) {
-                VoteTopic topic = voteTopicRepository.findById(topicId)
-                                .orElseThrow(() -> new RuntimeException("Topic not found"));
+// ====== Tính kết quả ======
+public VoteTopicResponse calculateResult(Long topicId) {
+    VoteTopic topic = voteTopicRepository.findById(topicId)
+            .orElseThrow(() -> new RuntimeException("Topic not found"));
 
-                if (topic.getDecisionType() == DecisionType.MINOR) {
-                        topic.setStatus(VoteStatus.APPROVED);
-                        return mapTopicToResponse(voteTopicRepository.save(topic));
-                }
+    // Nếu là quyết định minor thì duyệt nhanh
+    if (topic.getDecisionType() == DecisionType.MINOR) {
+        topic.setStatus(VoteStatus.APPROVED);
+        voteTopicRepository.save(topic);
+        return mapTopicToResponse(topic);
+    }
 
-                List<Vote> votes = voteRepository.findByTopic(topic);
-                double totalWeight = votes.stream()
-                                .mapToDouble(v -> v.getOwnership().getTotalSharePercentage() / 100)
-                                .sum();
+    // Lấy danh sách tất cả vote của topic
+    List<Vote> votes = voteRepository.findByTopic(topic);
+    if (votes.isEmpty()) {
+        throw new RuntimeException("No votes found for this topic");
+    }
 
-                double agreeWeight = votes.stream()
-                                .filter(Vote::getChoice)
-                                .mapToDouble(v -> v.getOwnership().getTotalSharePercentage() / 100)
-                                .sum();
+    double totalWeight = 0.0;
+    double agreeWeight = 0.0;
+    Ownership ownership;
+    for (Vote v : votes) {
+        ownership = ownershipRepository.findByUser_IdAndVehicle_VehicleId(v.getUser().getId(), v.getVehicle().getVehicleId())
+        .orElse(null);
+        
 
-                double ratio = totalWeight == 0 ? 0 : (agreeWeight / totalWeight);
-                topic.setStatus(ratio >= topic.getRequiredRatio() ? VoteStatus.APPROVED : VoteStatus.REJECTED);
+        double weight = ownership.getTotalSharePercentage() / 100.0;
+        totalWeight += weight;
 
-                voteTopicRepository.save(topic);
-                return mapTopicToResponse(topic);
+        if (Boolean.TRUE.equals(v.getChoice())) {
+            agreeWeight += weight;
         }
+    }
+
+    double ratio = totalWeight == 0 ? 0 : (agreeWeight / totalWeight);
+
+    topic.setStatus(ratio >= topic.getRequiredRatio()
+            ? VoteStatus.APPROVED
+            : VoteStatus.REJECTED);
+
+    voteTopicRepository.save(topic);
+    return mapTopicToResponse(topic);
+}
+
 
         // ====== Lấy danh sách vote của 1 chủ đề ======
         public List<VoteResponse> getVotes(Long topicId) {
@@ -150,7 +180,7 @@ public class VoteService {
                                 .userId(v.getUser().getId())
                                 .userName(v.getUser().getFullName())
                                 .choice(v.getChoice())
-                                .weight(v.getOwnership().getTotalSharePercentage())
+                                .weight(v.getPercentCoOwner())
                                 .votedAt(v.getVotedAt())
                                 .build();
         }
@@ -163,9 +193,7 @@ public class VoteService {
                                 .decisionType(t.getDecisionType())
                                 .requiredRatio(t.getRequiredRatio())
                                 .status(t.getStatus())
-                                .ownershipId(t.getOwnership().getOwnershipId())
-                                .ownershipVehicleName(t.getOwnership().getVehicle().getBrand() + " "
-                                                + t.getOwnership().getVehicle().getModel())
+                                .vehicleName(t.getVehicle().getModel()+t.getVehicle().getPlateNumber())
                                 .createdById(t.getCreatedBy().getId())
                                 .createdByName(t.getCreatedBy().getFullName())
                                 .createdAt(t.getCreatedAt())

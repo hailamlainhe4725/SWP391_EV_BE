@@ -16,9 +16,9 @@ public class VoteTopicResponse {
     Double requiredRatio;
     VoteStatus status;
 
-    Long ownershipId;
-    String ownershipVehicleName;
 
+
+    String vehicleName;
     Long createdById;
     String createdByName;
 

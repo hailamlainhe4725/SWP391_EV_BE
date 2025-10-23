@@ -136,13 +136,13 @@ public class BookingService {
 }
 
 
-        public List<BookingResponse> getMyBookings(Authentication authentication) {
+        public List<BookingVehicleResponse> getMyBookings(Authentication authentication) {
                                 User user = userRepository.findByEmail(authentication.getName())
                                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
                 return bookingRepository.findAll().stream()
                                 .filter(b -> b.getUser().getId()==user.getId())
                                 .filter(b -> !b.isDeleted())
-                                .map(this::mapToResponse)
+                                .map(this::mapToResponseB)
                                 .collect(Collectors.toList());
         }
 

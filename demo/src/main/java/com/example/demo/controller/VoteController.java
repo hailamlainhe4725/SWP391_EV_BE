@@ -61,7 +61,7 @@ public class VoteController {
 
     // ===== USER hoặc STAFF xem danh sách phiếu của topic =====
     @PreAuthorize("hasAnyRole('USER','STAFF')")
-    @GetMapping("/topics/{topicId}")
+    @GetMapping("/topic/{topicId}/find")
     public ResponseEntity<List<VoteResponse>> getVotes(@PathVariable Long topicId) {
         List<VoteResponse> res = voteService.getVotes(topicId);
         return ResponseEntity.ok(res);
