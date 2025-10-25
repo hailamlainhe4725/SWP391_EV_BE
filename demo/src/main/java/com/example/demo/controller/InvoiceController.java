@@ -1,11 +1,10 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.request.CreateInvoiceRequest;
 import com.example.demo.dto.response.InvoiceResponse;
-import com.example.demo.dto.response.MonthlyInvoiceSummaryResponse;
+import com.example.demo.dto.response.SumaInvoiceResponse;
 import com.example.demo.service.InvoiceService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -20,29 +19,44 @@ public class InvoiceController {
 
     private final InvoiceService invoiceService;
 
-    // === STAFF: tạo hóa đơn ===
+    /**
+     * 🔹 Lấy tất cả hóa đơn (dành cho admin)
+     */
     @PreAuthorize("hasRole('STAFF')")
-    @PostMapping("/createInvoice")
-    public ResponseEntity<List<InvoiceResponse>> create(@RequestBody CreateInvoiceRequest req) {
-        return ResponseEntity.ok(invoiceService.createAutoInvoicesByEmail(req.getEmail()));
+    @GetMapping
+    public List<InvoiceResponse> getAllInvoices() {
+        return invoiceService.getAllInvoices();
     }
 
-    // === STAFF: xem tất cả hóa đơn ===
-    @PreAuthorize("hasRole('STAFF')")
-    @GetMapping("/all")
-    public ResponseEntity<List<InvoiceResponse>> getAll() {
-        return ResponseEntity.ok(invoiceService.getAllInvoices());
-    }
-
-    // === USER: xem hóa đơn của mình ===
+    /**
+     * 🔹 Lấy tổng hợp hóa đơn của người dùng đang đăng nhập trong tháng chỉ định
+     * Nếu không truyền `month`, mặc định là tháng hiện tại.
+     */
     @PreAuthorize("hasRole('USER')")
-@GetMapping("/my")
-public ResponseEntity<MonthlyInvoiceSummaryResponse> getMyInvoice(
-        Authentication authentication,
-        @RequestParam(required = false) String month // ví dụ: "2025-10"
-) {
-    YearMonth targetMonth = (month != null) ? YearMonth.parse(month) : null;
-    return ResponseEntity.ok(invoiceService.getMyInvoice(authentication, targetMonth));
-}
+    @GetMapping("/my")
+    public SumaInvoiceResponse getMyInvoice(
+            Authentication authentication,
+            @RequestParam(value = "month", required = false)
+            @DateTimeFormat(pattern = "yyyy-MM") YearMonth month
+    ) {
+        return invoiceService.getMyInvoice(authentication, month);
+    }
 
+    /**
+     * 🔹 Tạo hóa đơn tự động cho user theo email (dành cho hệ thống hoặc admin)
+     */
+    @PreAuthorize("hasRole('STAFF')")
+    @PostMapping("/auto")
+    public SumaInvoiceResponse createAutoInvoicesByEmail(@RequestParam String email) {
+        return invoiceService.createAutoInvoicesByEmail(email);
+    }
+
+    /**
+     * 🔹 Lấy tất cả SumaInvoice (gộp hóa đơn hàng tháng của tất cả user)
+     */
+    @PreAuthorize("hasRole('STAFF')")
+    @GetMapping("/suma")
+    public List<SumaInvoiceResponse> getAllSumaInvoices() {
+        return invoiceService.getAllSumaInvoices();
+    }
 }

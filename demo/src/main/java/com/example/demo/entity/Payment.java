@@ -14,13 +14,15 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "payment")
 public class Payment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long paymentId;
 
+    // 🔹 Giao dịch này gắn với SumaInvoice (hóa đơn tổng hợp của tháng)
     @ManyToOne
-    @JoinColumn(name = "invoice_id", nullable = false)
-    Invoice invoice;
+    @JoinColumn(name = "suma_invoice_id", nullable = false)
+    SumaInvoice sumaInvoice;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -30,8 +32,8 @@ public class Payment {
     String orderCode; // Mã giao dịch gửi lên PayOS
     String checkoutUrl;
     String qrCode;
-
     String status; // PENDING, SUCCESS, FAILED
+
     LocalDateTime createdAt = LocalDateTime.now();
     LocalDateTime completedAt;
 }

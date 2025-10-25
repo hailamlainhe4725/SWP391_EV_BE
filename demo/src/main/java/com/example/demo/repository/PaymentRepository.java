@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Optional<Payment> findByOrderCode(String orderCode);
-    List<Payment> findByInvoice_InvoiceId(Long invoiceId);
+
 }

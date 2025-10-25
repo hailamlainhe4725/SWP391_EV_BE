@@ -1,15 +1,14 @@
 package com.example.demo.service;
 
-import com.example.demo.dto.request.CreateInvoiceRequest;
 import com.example.demo.dto.response.InvoiceDetailResponse;
 import com.example.demo.dto.response.InvoiceResponse;
-import com.example.demo.dto.response.MonthlyInvoiceSummaryResponse;
+import com.example.demo.dto.response.SumaInvoiceResponse;
 import com.example.demo.entity.*;
 import com.example.demo.enums.BillingStatus;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.temporal.TemporalAdjusters;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,54 +30,99 @@ public class InvoiceService {
     private final FixedFeeRepository fixedFeeRepository;
     private final VariableFeeRepository variableFeeRepository;
     private final OwnershipRepository ownershipRepository;
+    private final SumaInvoiceRepository sumaInvoiceRepository;
 
     /**
-     * Tạo hóa đơn tự động — chỉ cần userId và vehicleId.
-     * Toàn bộ fee sẽ được lấy tự động từ bảng FixedFee và VariableFee.
+     * 🔹 Tạo toàn bộ hóa đơn tự động theo email người dùng, gắn với SumaInvoice
      */
+    @Transactional
+    public SumaInvoiceResponse createAutoInvoicesByEmail(String email) {
+        try{
+            User user ;
+            try{
+            user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            }catch(Exception e){
+                 e.printStackTrace();
+                System.out.println("loi o day");
+                 throw e;
+            }
+        List<Ownership> ownerships = ownershipRepository.findByUser_IdAndDeletedFalse(user.getId());
+        if (ownerships.isEmpty()) {
+            throw new RuntimeException("User does not own any vehicles.");
+        }
 
-     public List<InvoiceResponse> createAutoInvoicesByEmail(String email) {
-    User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        String currentMonth = YearMonth.now().toString(); // ví dụ "2025-10"
 
-    // Lấy danh sách Ownership (vehicle mà user này sở hữu)
-    List<Ownership> ownerships = ownershipRepository.findByUser_IdAndDeletedFalse(user.getId());
-    if (ownerships.isEmpty()) {
-        throw new RuntimeException("User does not own any vehicles.");
+        // Nếu đã có SumaInvoice của tháng này -> return luôn
+        Optional<SumaInvoice> existing = sumaInvoiceRepository.findByUserAndMonth(user, currentMonth);
+        if (existing.isPresent()) {
+            return mapToSumaInvoiceResponse(existing.get());
+        }
+
+        SumaInvoice sumaInvoice = SumaInvoice.builder()
+                .user(user)
+                .month(currentMonth)
+                .totalAmount(0.0)
+                .status(BillingStatus.OPEN)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        sumaInvoice = sumaInvoiceRepository.save(sumaInvoice);
+
+        double totalAmount = 0;
+        List<InvoiceResponse> invoiceResponses = new ArrayList<>();
+
+        for (Ownership own : ownerships) {
+            Vehicle vehicle = own.getVehicle();
+
+            InvoiceResponse response = createAutoInvoice(
+                    user.getId(),
+                    vehicle.getVehicleId(),
+                    "Auto-generated monthly invoice for " + vehicle.getModel() + " - " + vehicle.getPlateNumber()
+            );
+
+            Invoice invoice = invoiceRepository.findById(response.getInvoiceId())
+                    .orElseThrow(() -> new RuntimeException("Created invoice not found"));
+            invoice.setSumaInvoice(sumaInvoice);
+            invoiceRepository.save(invoice);
+
+            totalAmount += response.getTotalAmount();
+            invoiceResponses.add(response);
+        }
+
+        sumaInvoice.setTotalAmount(totalAmount);
+        sumaInvoice.setUpdatedAt(LocalDateTime.now());
+        sumaInvoiceRepository.save(sumaInvoice);
+
+        return mapToSumaInvoiceResponse(sumaInvoice);
+    }catch (Exception e){
+        e.printStackTrace();
+        throw e;
+    }
     }
 
-    List<InvoiceResponse> responses = new ArrayList<>();
-
-    for (Ownership own : ownerships) {
-        Vehicle vehicle = own.getVehicle();
-        // Gọi lại method gốc
-        InvoiceResponse response = createAutoInvoice(user.getId(),vehicle.getVehicleId(),("Auto-generated monthly invoice for " + vehicle.getModel()+vehicle.getPlateNumber()));
-        responses.add(response);
-    }
-
-    return responses;
-}
-
-    public InvoiceResponse createAutoInvoice(Long userId,Long vehicleId,String note) {
-
+    /**
+     * 🔹 Tạo hóa đơn tự động cho 1 user + 1 vehicle
+     */
+    public InvoiceResponse createAutoInvoice(Long userId, Long vehicleId, String note) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
 
-         // Xác định đầu và cuối tháng hiện tại
-    LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
-    LocalDateTime endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth()).atTime(23,59,59);
-        boolean exists = invoiceRepository.existsByUserAndVehicleAndIssuedDateBetween(
-    user, vehicle, startOfMonth, endOfMonth
-);
-if (exists) {
-    throw new RuntimeException("Invoice for this month already exists.");
-}
-    Invoice invoice = Invoice.builder()
+        LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth()).atTime(23, 59, 59);
+
+        boolean exists = invoiceRepository.existsByUserAndVehicleAndIssuedDateBetween(user, vehicle, startOfMonth, endOfMonth);
+        if (exists) {
+            throw new RuntimeException("Invoice for this month already exists.");
+        }
+
+        Invoice invoice = Invoice.builder()
                 .user(user)
                 .vehicle(vehicle)
-                .status(BillingStatus.OPEN)
                 .issuedDate(LocalDateTime.now())
                 .dueDate(LocalDateTime.now().plusDays(7))
                 .note(note)
@@ -90,8 +133,8 @@ if (exists) {
 
         double total = 0;
 
-        // 1️⃣ Lấy Fixed Fees theo Vehicle
-        List<FixedFee> fixedFees = fixedFeeRepository.findByVehicleAndDeletedFalseAndCreatedAtBetween(vehicle,startOfMonth,endOfMonth);
+        // Fixed Fees
+        List<FixedFee> fixedFees = fixedFeeRepository.findByVehicleAndDeletedFalseAndCreatedAtBetween(vehicle, startOfMonth, endOfMonth);
         for (FixedFee ff : fixedFees) {
             InvoiceDetail detail = InvoiceDetail.builder()
                     .invoice(invoice)
@@ -107,8 +150,8 @@ if (exists) {
             total += ff.getBaseAmount();
         }
 
-        // 2️⃣ Lấy Variable Fees theo Vehicle + User
-        List<VariableFee> variableFees = variableFeeRepository.findByVehicleAndUserAndDeletedFalseAndCreatedAtBetween(vehicle, user,startOfMonth,endOfMonth);
+        // Variable Fees
+        List<VariableFee> variableFees = variableFeeRepository.findByVehicleAndUserAndDeletedFalseAndCreatedAtBetween(vehicle, user, startOfMonth, endOfMonth);
         for (VariableFee vf : variableFees) {
             InvoiceDetail detail = InvoiceDetail.builder()
                     .invoice(invoice)
@@ -130,88 +173,93 @@ if (exists) {
         return mapToResponse(invoice);
     }
 
+    /**
+     * 🔹 Lấy toàn bộ Invoice (nếu cần)
+     */
     public List<InvoiceResponse> getAllInvoices() {
         return invoiceRepository.findAll().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
-
-public MonthlyInvoiceSummaryResponse getMyInvoice(Authentication authentication, YearMonth targetMonth) {
-    User user = userRepository.findByEmail(authentication.getName())
-            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-    // Nếu frontend không truyền month, mặc định là tháng hiện tại
-    if (targetMonth == null) {
-        targetMonth = YearMonth.now();
+    /**
+     * 🔹 Lấy toàn bộ SumaInvoice (tổng hợp theo tháng)
+     */
+    public List<SumaInvoiceResponse> getAllSumaInvoices() {
+        return sumaInvoiceRepository.findAll().stream()
+                .map(this::mapToSumaInvoiceResponse)
+                .collect(Collectors.toList());
     }
 
-    // Xác định đầu và cuối tháng
-    LocalDateTime startOfMonth = targetMonth.atDay(1).atStartOfDay();
-    LocalDateTime endOfMonth = targetMonth.atEndOfMonth().atTime(23, 59, 59);
+    /**
+     * 🔹 Lấy SumaInvoice theo user và tháng (hoặc auto tạo nếu chưa có)
+     */
+    public SumaInvoiceResponse getMyInvoice(Authentication authentication, YearMonth targetMonth) {
+        User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-    // Lấy tất cả hóa đơn của user trong tháng này
-    List<InvoiceResponse> userInvoices = getAllInvoices().stream()
-            .filter(i -> i.getUserId().equals(user.getId()))
-            .filter(i -> !i.getIssuedDate().isBefore(startOfMonth) && !i.getIssuedDate().isAfter(endOfMonth))
-            .toList();
+        if (targetMonth == null) {
+            targetMonth = YearMonth.now();
+        }
 
-    // Tính tổng tiền
-    double total = userInvoices.stream()
-            .mapToDouble(InvoiceResponse::getTotalAmount)
-            .sum();
+        String monthStr = targetMonth.toString();
 
-    // Trả về kết quả tổng hợp
-    return MonthlyInvoiceSummaryResponse.builder()
-            .userName(user.getFullName())
-            .month(targetMonth.toString()) // ví dụ "2025-10"
-            .totalAmount(total)
-            .invoices(userInvoices)
-            .build();
-}
-
-    
-   private InvoiceResponse mapToResponse(Invoice invoice) {
-    // đảm bảo không null
-    List<InvoiceDetail> invoiceDetails = invoice.getDetails();
-    if (invoiceDetails == null) {
-        invoiceDetails = List.of();
+        return sumaInvoiceRepository.findByUserAndMonth(user, monthStr)
+                .map(this::mapToSumaInvoiceResponse)
+                .orElseGet(() -> createAutoInvoicesByEmail(user.getEmail()));
     }
 
-    // dùng for-loop thay vì stream().map(...) để tránh mọi vấn đề inference
-    List<InvoiceDetailResponse> details = new ArrayList<>();
-    for (InvoiceDetail detail : invoiceDetails) {
-        if (detail == null) continue;
-        if (detail.isDeleted()) continue;
+    /**
+     * 🔹 Mapping
+     */
+    private SumaInvoiceResponse mapToSumaInvoiceResponse(SumaInvoice sumaInvoice) {
+        List<InvoiceResponse> invoiceResponses = sumaInvoice.getInvoices() != null
+                ? sumaInvoice.getInvoices().stream().map(this::mapToResponse).toList()
+                : List.of();
 
-        InvoiceDetailResponse.InvoiceDetailResponseBuilder builder = InvoiceDetailResponse.builder();
-        builder.detailId(detail.getDetailId());
-        builder.feeType(detail.getFeeType());
-        builder.sourceType(detail.getSourceType());
-        builder.relatedId(detail.getRelatedId());
-        builder.description(detail.getDescription());
-        builder.amount(detail.getAmount());
-        builder.createdAt(detail.getCreatedAt());
-
-        InvoiceDetailResponse dto = builder.build();
-        details.add(dto);
+        return SumaInvoiceResponse.builder()
+                .sumaInvoiceId(sumaInvoice.getId())
+                .userName(sumaInvoice.getUser().getFullName())
+                .month(sumaInvoice.getMonth())
+                .totalAmount(sumaInvoice.getTotalAmount())
+                .status(sumaInvoice.getStatus().name())
+                .invoices(invoiceResponses)
+                .build();
     }
 
-    return InvoiceResponse.builder()
-            .invoiceId(invoice.getInvoiceId())
-            .userId(invoice.getUser() != null ? invoice.getUser().getId() : null)
-            .fullName(invoice.getUser().getFullName())
-            .email(invoice.getUser().getEmail())
-            .phone(invoice.getUser().getPhone())
-            .plateNumber(invoice.getVehicle().getPlateNumber())
-            .model(invoice.getVehicle().getModel())
-            .vehicleId(invoice.getVehicle() != null ? invoice.getVehicle().getVehicleId() : null)
-            .status(invoice.getStatus())
-            .totalAmount(invoice.getTotalAmount())
-            .issuedDate(invoice.getIssuedDate())
-            .dueDate(invoice.getDueDate())
-            .details(details)
-            .build();
-}
+    private InvoiceResponse mapToResponse(Invoice invoice) {
+        List<InvoiceDetail> invoiceDetails = invoice.getDetails();
+        if (invoiceDetails == null) {
+            invoiceDetails = List.of();
+        }
 
+        List<InvoiceDetailResponse> details = new ArrayList<>();
+        for (InvoiceDetail detail : invoiceDetails) {
+            if (detail == null || detail.isDeleted()) continue;
+            details.add(InvoiceDetailResponse.builder()
+                    .detailId(detail.getDetailId())
+                    .feeType(detail.getFeeType())
+                    .sourceType(detail.getSourceType())
+                    .relatedId(detail.getRelatedId())
+                    .description(detail.getDescription())
+                    .amount(detail.getAmount())
+                    .createdAt(detail.getCreatedAt())
+                    .build());
+        }
+
+        return InvoiceResponse.builder()
+                .invoiceId(invoice.getInvoiceId())
+                .userId(invoice.getUser() != null ? invoice.getUser().getId() : null)
+                .fullName(invoice.getUser().getFullName())
+                .email(invoice.getUser().getEmail())
+                .phone(invoice.getUser().getPhone())
+                .plateNumber(invoice.getVehicle().getPlateNumber())
+                .model(invoice.getVehicle().getModel())
+                .vehicleId(invoice.getVehicle() != null ? invoice.getVehicle().getVehicleId() : null)
+                .totalAmount(invoice.getTotalAmount())
+                .issuedDate(invoice.getIssuedDate())
+                .dueDate(invoice.getDueDate())
+                .details(details)
+                .build();
+    }
 }

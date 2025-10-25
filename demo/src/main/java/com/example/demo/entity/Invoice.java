@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.example.demo.enums.BillingStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Getter
 @Setter
@@ -32,8 +33,7 @@ public class Invoice {
 
     String invoiceMonth;
     Double totalAmount;
-    @Enumerated(EnumType.STRING)
-    BillingStatus status = BillingStatus.OPEN;
+
     LocalDateTime issuedDate;
     LocalDateTime dueDate;
     String note;
@@ -43,4 +43,9 @@ public class Invoice {
 
     @Column(name = "deleted")
     boolean deleted = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "suma_invoice_id")
+@JsonIgnore
+private SumaInvoice sumaInvoice;
 }

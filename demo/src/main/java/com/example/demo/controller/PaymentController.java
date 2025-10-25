@@ -17,10 +17,10 @@ public class PaymentController {
     // Tạo link thanh toán
     // =========================
     @PreAuthorize("hasRole('USER')")
-    @PostMapping("/create/{invoiceId}/pay")
-    public ResponseEntity<?> createPayment(@PathVariable Long invoiceId) {
+    @PostMapping("/create/pay")
+    public ResponseEntity<?> createPayment(@RequestParam Long SumaInvoiceId) {
         try {
-            return ResponseEntity.ok(paymentService.createPaymentLink(invoiceId));
+            return ResponseEntity.ok(paymentService.createPaymentLink(SumaInvoiceId));
         } catch (Exception e) {
             return ResponseEntity.status(400).body(e.getMessage());
         }
