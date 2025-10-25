@@ -44,4 +44,10 @@ public class User {
         @Column(name = "signature_image_url")
     String signatureImageUrl; // URL chữ ký số
 
+    @Column(name = "cccd")
+    String cccd;
+
+    @Column(name = "gplx")
+    String gplx;
+
 }

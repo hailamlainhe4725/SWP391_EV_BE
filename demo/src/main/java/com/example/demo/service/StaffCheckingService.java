@@ -187,7 +187,7 @@ public class StaffCheckingService {
                 .booking(sc.getBooking())
                 .staffChecking(sc)
                 .type(VariableFeeType.OverOdometer)
-                .amount(exceededKm * sc.getVehicle().getOperatingCostPerKm())
+                .amount(exceededKm * 1)
                 .description("Exceeded allowed kilometers")
                 .createdAt(LocalDateTime.now())
                 .recordedBy(sc.getStaff())

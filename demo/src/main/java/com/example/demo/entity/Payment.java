@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import java.time.LocalDateTime;
-import com.example.demo.enums.TransactionStatus;
 
 @Getter
 @Setter
@@ -23,11 +22,16 @@ public class Payment {
     @JoinColumn(name = "invoice_id", nullable = false)
     Invoice invoice;
 
-    Double paidAmount;
-    LocalDateTime paymentDate;
-    String method;
-    @Enumerated(EnumType.STRING)
-    TransactionStatus status ;
-    @Column(name = "deleted")
-    boolean deleted = false;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    User user;
+
+    Double amount;
+    String orderCode; // Mã giao dịch gửi lên PayOS
+    String checkoutUrl;
+    String qrCode;
+
+    String status; // PENDING, SUCCESS, FAILED
+    LocalDateTime createdAt = LocalDateTime.now();
+    LocalDateTime completedAt;
 }

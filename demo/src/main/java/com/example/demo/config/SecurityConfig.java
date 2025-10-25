@@ -31,7 +31,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/uploads/**").permitAll()
     .requestMatchers("/api/users/auth", "/api/users/login", "/api/users/register",
-                     "/swagger-ui/**", "/v3/api-docs/**","/api/vehicles/top4","/api/vehicles/viewAllVehicle").permitAll()
+                     "/swagger-ui/**", "/v3/api-docs/**","/api/vehicles/top4","/api/vehicles/viewAllVehicle","/api/payments/webhook"
+).permitAll()
     .anyRequest().authenticated()
 )
 
