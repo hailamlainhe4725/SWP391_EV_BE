@@ -31,9 +31,12 @@ public class OwnershipVehicleResponse {
     String plateNumber;
     String color;
     Integer year;
+    Integer seat;
     Double batteryCapacityKwh;
-    Double operatingCostPerDay;
-    Double operatingCostPerKm;
+    Double price; // giá cơ bản của xe
+    Double feeChargingPerKwh; // phí sạc điện theo kWh
+    Double feeOverKm; // phí vượt km
+    Double operationPerM; // chi phí vận hành / km
     String description;
     String imageUrl;
     VehicleStatus vehicleStatus;

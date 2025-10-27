@@ -7,10 +7,13 @@ import com.example.demo.entity.*;
 import com.example.demo.enums.BillingStatus;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.*;
-import jakarta.transaction.Transactional;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
+
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -35,31 +38,26 @@ public class InvoiceService {
     /**
      * 🔹 Tạo toàn bộ hóa đơn tự động theo email người dùng, gắn với SumaInvoice
      */
-    @Transactional
-    public SumaInvoiceResponse createAutoInvoicesByEmail(String email) {
-        try{
-            User user ;
-            try{
-            user = userRepository.findByEmail(email)
+@Transactional
+public SumaInvoiceResponse createAutoInvoicesByEmail(String email) {
+    try {
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-            }catch(Exception e){
-                 e.printStackTrace();
-                System.out.println("loi o day");
-                 throw e;
-            }
+
         List<Ownership> ownerships = ownershipRepository.findByUser_IdAndDeletedFalse(user.getId());
         if (ownerships.isEmpty()) {
             throw new RuntimeException("User does not own any vehicles.");
         }
 
-        String currentMonth = YearMonth.now().toString(); // ví dụ "2025-10"
+        String currentMonth = YearMonth.now().toString();
 
-        // Nếu đã có SumaInvoice của tháng này -> return luôn
+        // ✅ Nếu đã có SumaInvoice trong tháng này, return luôn
         Optional<SumaInvoice> existing = sumaInvoiceRepository.findByUserAndMonth(user, currentMonth);
         if (existing.isPresent()) {
             return mapToSumaInvoiceResponse(existing.get());
         }
 
+        // ✅ Tạo SumaInvoice mới
         SumaInvoice sumaInvoice = SumaInvoice.builder()
                 .user(user)
                 .month(currentMonth)
@@ -68,110 +66,119 @@ public class InvoiceService {
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
-
         sumaInvoice = sumaInvoiceRepository.save(sumaInvoice);
 
         double totalAmount = 0;
-        List<InvoiceResponse> invoiceResponses = new ArrayList<>();
 
+        // ✅ Tạo hóa đơn cho từng xe (mỗi lần tạo nằm trong transaction riêng)
         for (Ownership own : ownerships) {
             Vehicle vehicle = own.getVehicle();
+            try {
+                InvoiceResponse response = createAutoInvoiceInNewTransaction(
+                        user.getId(),
+                        vehicle.getVehicleId(),
+                        "Auto invoice for " + vehicle.getModel() + " - " + vehicle.getPlateNumber()
+                );
 
-            InvoiceResponse response = createAutoInvoice(
-                    user.getId(),
-                    vehicle.getVehicleId(),
-                    "Auto-generated monthly invoice for " + vehicle.getModel() + " - " + vehicle.getPlateNumber()
-            );
+                // ✅ Gắn invoice vào SumaInvoice
+                Invoice invoice = invoiceRepository.findById(response.getInvoiceId())
+                        .orElseThrow(() -> new RuntimeException("Created invoice not found"));
+                invoice.setSumaInvoice(sumaInvoice);
+                invoiceRepository.save(invoice);
 
-            Invoice invoice = invoiceRepository.findById(response.getInvoiceId())
-                    .orElseThrow(() -> new RuntimeException("Created invoice not found"));
-            invoice.setSumaInvoice(sumaInvoice);
-            invoiceRepository.save(invoice);
+                totalAmount += response.getTotalAmount();
 
-            totalAmount += response.getTotalAmount();
-            invoiceResponses.add(response);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                // ❗ Không throw lại → tránh rollback toàn bộ transaction
+                System.out.println("⚠️ Skipped vehicle " + vehicle.getPlateNumber() + " due to error: " + ex.getMessage());
+            }
         }
 
+        // ✅ Cập nhật tổng
         sumaInvoice.setTotalAmount(totalAmount);
         sumaInvoice.setUpdatedAt(LocalDateTime.now());
         sumaInvoiceRepository.save(sumaInvoice);
 
         return mapToSumaInvoiceResponse(sumaInvoice);
-    }catch (Exception e){
+
+    } catch (Exception e) {
         e.printStackTrace();
-        throw e;
+        throw new RuntimeException("Failed to create invoices: " + e.getMessage(), e);
     }
-    }
+}
 
     /**
      * 🔹 Tạo hóa đơn tự động cho 1 user + 1 vehicle
      */
-    public InvoiceResponse createAutoInvoice(Long userId, Long vehicleId, String note) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Vehicle vehicle = vehicleRepository.findById(vehicleId)
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+   @Transactional(propagation = Propagation.REQUIRES_NEW)
+public InvoiceResponse createAutoInvoiceInNewTransaction(Long userId, Long vehicleId, String note) {
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    Vehicle vehicle = vehicleRepository.findById(vehicleId)
+            .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
 
-        LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
-        LocalDateTime endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth()).atTime(23, 59, 59);
+    LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+    LocalDateTime endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth()).atTime(23, 59, 59);
 
-        boolean exists = invoiceRepository.existsByUserAndVehicleAndIssuedDateBetween(user, vehicle, startOfMonth, endOfMonth);
-        if (exists) {
-            throw new RuntimeException("Invoice for this month already exists.");
-        }
-
-        Invoice invoice = Invoice.builder()
-                .user(user)
-                .vehicle(vehicle)
-                .issuedDate(LocalDateTime.now())
-                .dueDate(LocalDateTime.now().plusDays(7))
-                .note(note)
-                .totalAmount(0.0)
-                .build();
-
-        invoiceRepository.save(invoice);
-
-        double total = 0;
-
-        // Fixed Fees
-        List<FixedFee> fixedFees = fixedFeeRepository.findByVehicleAndDeletedFalseAndCreatedAtBetween(vehicle, startOfMonth, endOfMonth);
-        for (FixedFee ff : fixedFees) {
-            InvoiceDetail detail = InvoiceDetail.builder()
-                    .invoice(invoice)
-                    .sourceType("Fixed")
-                    .relatedId(ff.getFixedFeeId())
-                    .feeType(ff.getType().name())
-                    .description(ff.getDescription())
-                    .amount(ff.getBaseAmount())
-                    .createdAt(LocalDateTime.now())
-                    .deleted(false)
-                    .build();
-            detailRepository.save(detail);
-            total += ff.getBaseAmount();
-        }
-
-        // Variable Fees
-        List<VariableFee> variableFees = variableFeeRepository.findByVehicleAndUserAndDeletedFalseAndCreatedAtBetween(vehicle, user, startOfMonth, endOfMonth);
-        for (VariableFee vf : variableFees) {
-            InvoiceDetail detail = InvoiceDetail.builder()
-                    .invoice(invoice)
-                    .sourceType("Variable")
-                    .relatedId(vf.getVariableFeeId())
-                    .feeType(vf.getType().name())
-                    .description(vf.getDescription())
-                    .amount(vf.getAmount())
-                    .createdAt(LocalDateTime.now())
-                    .deleted(false)
-                    .build();
-            detailRepository.save(detail);
-            total += vf.getAmount();
-        }
-
-        invoice.setTotalAmount(total);
-        invoiceRepository.save(invoice);
-
-        return mapToResponse(invoice);
+    boolean exists = invoiceRepository.existsByUserAndVehicleAndIssuedDateBetween(user, vehicle, startOfMonth, endOfMonth);
+    if (exists) {
+        throw new RuntimeException("Invoice for this month already exists.");
     }
+
+    Invoice invoice = Invoice.builder()
+            .user(user)
+            .vehicle(vehicle)
+            .issuedDate(LocalDateTime.now())
+            .dueDate(LocalDateTime.now().plusDays(7))
+            .note(note)
+            .totalAmount(0.0)
+            .build();
+
+    invoice = invoiceRepository.save(invoice);
+
+    double total = 0;
+
+    // ✅ Fixed Fees
+    List<FixedFee> fixedFees = fixedFeeRepository.findByVehicleAndDeletedFalseAndCreatedAtBetween(vehicle, startOfMonth, endOfMonth);
+    for (FixedFee ff : fixedFees) {
+        InvoiceDetail detail = InvoiceDetail.builder()
+                .invoice(invoice)
+                .sourceType("Fixed")
+                .relatedId(ff.getFixedFeeId())
+                .feeType(ff.getType().name())
+                .description(ff.getDescription())
+                .amount(ff.getBaseAmount())
+                .createdAt(LocalDateTime.now())
+                .deleted(false)
+                .build();
+        detailRepository.save(detail);
+        total += ff.getBaseAmount();
+    }
+
+    // ✅ Variable Fees
+    List<VariableFee> variableFees = variableFeeRepository.findByVehicleAndUserAndDeletedFalseAndCreatedAtBetween(vehicle, user, startOfMonth, endOfMonth);
+    for (VariableFee vf : variableFees) {
+        InvoiceDetail detail = InvoiceDetail.builder()
+                .invoice(invoice)
+                .sourceType("Variable")
+                .relatedId(vf.getVariableFeeId())
+                .feeType(vf.getType().name())
+                .description(vf.getDescription())
+                .amount(vf.getAmount())
+                .createdAt(LocalDateTime.now())
+                .deleted(false)
+                .build();
+        detailRepository.save(detail);
+        total += vf.getAmount();
+    }
+
+    invoice.setTotalAmount(total);
+    invoiceRepository.save(invoice);
+
+    System.out.println("✅ Created invoice #" + invoice.getInvoiceId() + " total=" + total);
+    return mapToResponse(invoice);
+}
 
     /**
      * 🔹 Lấy toàn bộ Invoice (nếu cần)

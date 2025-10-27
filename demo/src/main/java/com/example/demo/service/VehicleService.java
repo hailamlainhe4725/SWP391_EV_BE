@@ -31,7 +31,6 @@ public class VehicleService {
                 .collect(Collectors.toList());
     }
 
-
     public VehicleResponse getById(Long id) {
         Vehicle vehicle = vehicleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
@@ -46,8 +45,11 @@ public class VehicleService {
                 .color(req.getColor())
                 .year(req.getYear())
                 .batteryCapacityKwh(req.getBatteryCapacityKwh())
-                .operatingCostPerDay(req.getOperatingCostPerDay())
-                .operatingCostPerKm(req.getOperatingCostPerKm())
+                .seat(req.getSeat())
+                .price(req.getPrice())
+                .feeChargingPer1PercentUsed(req.getFeeChargingPer1PercentUsed())
+                .feeOverKm(req.getFeeOverKm())
+                .operationPerMonthPerShare(req.getOperationPerMonthPerShare())
                 .description(req.getDescription())
                 .imageUrl(req.getImageUrl())
                 .status(req.getStatus())
@@ -60,22 +62,15 @@ public class VehicleService {
         Vehicle v = vehicleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
 
-        if (req.getBrand() != null)
-            v.setBrand(req.getBrand());
-        if (req.getModel() != null)
-            v.setModel(req.getModel());
-        if (req.getColor() != null)
-            v.setColor(req.getColor());
-        if (req.getYear() != null)
-            v.setYear(req.getYear());
-        if (req.getOperatingCostPerDay() != null)
-            v.setOperatingCostPerDay(req.getOperatingCostPerDay());
-        if (req.getOperatingCostPerKm() != null)
-            v.setOperatingCostPerKm(req.getOperatingCostPerKm());
-        if (req.getDescription() != null)
-            v.setDescription(req.getDescription());
-        if (req.getStatus() != null)
-            v.setStatus(req.getStatus());
+        if (req.getBrand() != null) v.setBrand(req.getBrand());
+        if (req.getModel() != null) v.setModel(req.getModel());
+        if (req.getColor() != null) v.setColor(req.getColor());
+        if (req.getYear() != null) v.setYear(req.getYear());
+        if (req.getDescription() != null) v.setDescription(req.getDescription());
+        if (req.getStatus() != null) v.setStatus(req.getStatus());
+        if (req.getFeeChargingPer1PercentUsed() != null) v.setFeeChargingPer1PercentUsed(req.getFeeChargingPer1PercentUsed());
+        if (req.getFeeOverKm() != null) v.setFeeOverKm(req.getFeeOverKm());
+        if (req.getOperationPerMonthPerShare() != null) v.setOperationPerMonthPerShare(req.getOperationPerMonthPerShare());
 
         vehicleRepository.save(v);
         return mapToResponse(v);
@@ -88,6 +83,10 @@ public class VehicleService {
         vehicleRepository.save(v);
     }
 
+
+    // =====================================================
+    // 🧱 MAP ENTITY -> RESPONSE
+    // =====================================================
     protected VehicleResponse mapToResponse(Vehicle v) {
         return VehicleResponse.builder()
                 .vehicleId(v.getVehicleId())
@@ -97,8 +96,11 @@ public class VehicleService {
                 .color(v.getColor())
                 .year(v.getYear())
                 .batteryCapacityKwh(v.getBatteryCapacityKwh())
-                .operatingCostPerDay(v.getOperatingCostPerDay())
-                .operatingCostPerKm(v.getOperatingCostPerKm())
+                .seat(v.getSeat())
+                .price(v.getPrice())
+                .feeChargingPer1PercentUsed(v.getFeeChargingPer1PercentUsed())
+                .feeOverKm(v.getFeeOverKm())
+                .operationPerMonthPerShare(v.getOperationPerMonthPerShare())
                 .description(v.getDescription())
                 .imageUrl(v.getImageUrl())
                 .status(v.getStatus())

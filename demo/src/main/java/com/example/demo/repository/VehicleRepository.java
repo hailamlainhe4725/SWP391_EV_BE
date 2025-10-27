@@ -15,4 +15,6 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
 
     boolean existsByPlateNumber(String plateNumber);
     List<Vehicle> findTop4ByDeletedFalseOrderByVehicleIdAsc();
+
+    Vehicle findByVehicleId(Long vehicleId);
 }

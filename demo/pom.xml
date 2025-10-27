@@ -120,6 +120,11 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<dependency>
+    <groupId>org.mockito</groupId>
+    <artifactId>mockito-core</artifactId>
+    <scope>test</scope>
+</dependency>
 		<!-- 🌍 OAuth2 (tùy chọn nếu bạn có đăng nhập Google, Facebook) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

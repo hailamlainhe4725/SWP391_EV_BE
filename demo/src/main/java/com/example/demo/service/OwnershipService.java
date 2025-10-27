@@ -8,20 +8,16 @@ import com.example.demo.entity.User;
 import com.example.demo.entity.Vehicle;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.OwnershipRepository;
+import com.example.demo.repository.UserRepository;
+import com.example.demo.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
-
-import org.hibernate.annotations.Parameter;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
-import com.example.demo.repository.UserRepository;
-import com.example.demo.repository.VehicleRepository;
 @Service
 @RequiredArgsConstructor
 public class OwnershipService {
@@ -30,55 +26,73 @@ public class OwnershipService {
     private final VehicleService vehicleService;
     private final OwnershipRepository ownershipRepository;
     private final VehicleRepository vehicleRepository;
-   
 
-
+    // === Lấy tất cả Ownership ===
     public List<OwnershipResponse> getAll() {
         return ownershipRepository.findAll()
-                .stream().map(this::mapToResponse)
+                .stream()
+                .peek(this::resetIfNewMonth)
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
+    // === Lấy Ownership theo email ===
     public List<OwnershipResponse> getByUserEmail(String email) {
-                    User user = userRepository.findByEmail(email)
-        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         return ownershipRepository.findByUser_Id(user.getId())
-                .stream().map(this::mapToResponse)
+                .stream()
+                .peek(this::resetIfNewMonth)
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
-public List<VehicleResponse>getVehicleInMyOwnership(Authentication auth){
-    String email = auth.getName();
-    User user = userRepository.findByEmail(email)
-        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    // === Lấy danh sách xe mà user đang sở hữu ===
+    public List<VehicleResponse> getVehicleInMyOwnership(Authentication auth) {
+        String email = auth.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-    List<VehicleResponse> vehicles = ownershipRepository.findByUser_Id(user.getId()).stream()
-        .map(Ownership::getVehicle)
-        .map(vehicle -> vehicleService.mapToResponse(vehicle))
-        .collect(Collectors.toList());
+        return ownershipRepository.findByUser_Id(user.getId()).stream()
+                .peek(this::resetIfNewMonth)
+                .map(Ownership::getVehicle)
+                .map(vehicleService::mapToResponse)
+                .collect(Collectors.toList());
+    }
 
-    return vehicles;
-}
+    // === Lấy danh sách thành viên cùng sở hữu một xe ===
+    public List<OwnershipResponse> getGroupOwnership(Authentication auth, Long vehicleId) {
+        userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-    public List<OwnershipResponse> getGroupOwnership(Authentication auth,@PathVariable Long id) {
-            User user = userRepository.findByEmail(auth.getName())
-        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        Vehicle vehicle = vehicleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
 
         List<Ownership> ownershipList = ownershipRepository.findByVehicle_VehicleId(vehicle.getVehicleId());
-        if(ownershipList.isEmpty()){
-            throw new RuntimeException("this vehicle not in Ownership");
+        if (ownershipList.isEmpty()) {
+            throw new RuntimeException("This vehicle is not in Ownership");
         }
 
-
-        return ownershipList
-                .stream().map(this::mapToResponse)
+        return ownershipList.stream()
+                .peek(this::resetIfNewMonth)
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
+    // === Lấy danh sách xe + Ownership mà user đang sở hữu ===
+    public List<OwnershipVehicleResponse> getMyOwnershipVehicles(Authentication authentication) {
+        User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+        return ownershipRepository.findByUser_IdAndDeletedFalse(user.getId())
+                .stream()
+                .peek(this::resetIfNewMonth)
+                .map(this::mapToOwnershipVehicleResponse)
+                .collect(Collectors.toList());
+    }
+
+    // === Map Entity → DTO ===
     private OwnershipResponse mapToResponse(Ownership o) {
         return OwnershipResponse.builder()
                 .ownershipId(o.getOwnershipId())
@@ -91,23 +105,9 @@ public List<VehicleResponse>getVehicleInMyOwnership(Authentication auth){
                 .allowedKmThisMonth(o.getAllowedKmThisMonth())
                 .usedDaysThisMonth(o.getUsedDaysThisMonth())
                 .usedKmThisMonth(o.getUsedKmThisMonth())
-
                 .build();
     }
 
-
-     // === Lấy danh sách xe mà user đang sở hữu ===
-    public List<OwnershipVehicleResponse> getMyOwnershipVehicles(Authentication authentication) {
-       User user = userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        return ownershipRepository.findByUser_IdAndDeletedFalse(user.getId())
-                .stream()
-                .map(this::mapToOwnershipVehicleResponse)
-                .collect(Collectors.toList());
-    }
-
-    // === Map Entity → DTO ===
     private OwnershipVehicleResponse mapToOwnershipVehicleResponse(Ownership ownership) {
         Vehicle v = ownership.getVehicle();
 
@@ -128,12 +128,21 @@ public List<VehicleResponse>getVehicleInMyOwnership(Authentication auth){
                 .color(v.getColor())
                 .year(v.getYear())
                 .batteryCapacityKwh(v.getBatteryCapacityKwh())
-                .operatingCostPerDay(v.getOperatingCostPerDay())
-                .operatingCostPerKm(v.getOperatingCostPerKm())
                 .description(v.getDescription())
-                .imageUrl(v.getImageUrl()) // nếu có field này
+                .imageUrl(v.getImageUrl())
                 .vehicleStatus(v.getStatus())
                 .build();
     }
-    
+
+    // === Tự động reset usage khi sang tháng mới ===
+    private void resetIfNewMonth(Ownership ownership) {
+        int currentMonth = LocalDate.now().getMonthValue();
+
+        if (ownership.getLastResetMonth() == null || !ownership.getLastResetMonth().equals(currentMonth)) {
+            double baseKmLimit = 1000.0; // Giới hạn mặc định mỗi tháng cho 100% cổ phần
+            ownership.resetMonthlyLimit(baseKmLimit);
+            ownership.setLastResetMonth(currentMonth);
+            ownershipRepository.save(ownership);
+        }
+    }
 }

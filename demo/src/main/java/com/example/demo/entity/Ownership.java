@@ -74,4 +74,8 @@ public class Ownership {
             usedDaysThisMonth = 0.0;
         usedDaysThisMonth += days;
     }
+
+    @Column(name = "last_reset_month")
+    private Integer lastResetMonth;
+
 }

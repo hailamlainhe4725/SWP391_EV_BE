@@ -26,17 +26,30 @@ public class Vehicle {
     String color;
     Integer year;
     Double batteryCapacityKwh;
-    Double operatingCostPerDay;
-    Double operatingCostPerKm;
+    Integer seat;
+    Double price;
+
+    // ❌ KHÔNG nên khởi tạo trực tiếp với phép toán dùng biến khác
+    Double feeChargingPer1PercentUsed;
+    Double feeOverKm = 3000.0;
+    Double operationPerMonthPerShare;
+
     String description;
     String imageUrl;
 
     @Column(nullable = false)
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    VehicleStatus status = VehicleStatus.Available; // AVAILABLE, RENTED, MAINTENANCE
+    VehicleStatus status = VehicleStatus.Available;
 
     @Builder.Default
     @Column(name = "deleted")
     boolean deleted = false;
-}
+
+    // ✅ Viết lại logic tính toán an toàn
+    public void calculateFees() {
+        if (batteryCapacityKwh != null)
+            this.feeChargingPer1PercentUsed = 2500 * batteryCapacityKwh * 0.01;
+        if (price != null)
+            this.operationPerMonthPerShare = price * 0.01 * 0.1;
+    }}
