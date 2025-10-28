@@ -20,21 +20,21 @@ public class FeeController {
     private final FeeService feeService;
 
     // === STAFF: tạo phí biến động ===
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/variable")
     public ResponseEntity<FeeResponse> createVariableFee(@RequestBody CreateVariableFeeRequest req) {
         return ResponseEntity.ok(feeService.createVariableFee(req));
     }
 
     // === STAFF: tạo phí cố định ===
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/fixed")
     public ResponseEntity<FeeResponse> createFixedFee(@RequestBody CreateFixedFeeRequest req) {
         return ResponseEntity.ok(feeService.createFixedFee(req));
     }
 
     // === STAFF: xem tất cả phí ===
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/all")
     public ResponseEntity<List<FeeResponse>> getAllFees() {
         List<FeeResponse> res = feeService.getAllVariableFees();

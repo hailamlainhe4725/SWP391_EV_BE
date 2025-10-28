@@ -28,25 +28,25 @@ public class VehicleController {
         return ResponseEntity.ok(vehicleService.getAll());
     }
     
-    @PreAuthorize("hasAnyRole('USER','STAFF')")
+    @PreAuthorize("hasAnyRole('USER','STAFF','ADMIN')")
     @GetMapping("/vehicle/{id}")
     public ResponseEntity<VehicleResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(vehicleService.getById(id));
     }
 
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/createVehicle")
     public ResponseEntity<VehicleResponse> create(@Valid @RequestBody CreateVehicleRequest req) {
         return ResponseEntity.ok(vehicleService.create(req));
     }
 
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/update/{id}")
     public ResponseEntity<VehicleResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateVehicleRequest req) {
         return ResponseEntity.ok(vehicleService.update(id, req));
     }
 
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         vehicleService.softDelete(id);

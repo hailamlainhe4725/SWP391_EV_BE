@@ -22,7 +22,7 @@ public class InvoiceController {
     /**
      * 🔹 Lấy tất cả hóa đơn (dành cho admin)
      */
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public List<InvoiceResponse> getAllInvoices() {
         return invoiceService.getAllInvoices();
@@ -45,7 +45,7 @@ public class InvoiceController {
     /**
      * 🔹 Tạo hóa đơn tự động cho user theo email (dành cho hệ thống hoặc admin)
      */
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/auto")
     public SumaInvoiceResponse createAutoInvoicesByEmail(@RequestParam String email) {
         return invoiceService.createAutoInvoicesByEmail(email);
@@ -54,7 +54,7 @@ public class InvoiceController {
     /**
      * 🔹 Lấy tất cả SumaInvoice (gộp hóa đơn hàng tháng của tất cả user)
      */
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/suma")
     public List<SumaInvoiceResponse> getAllSumaInvoices() {
         return invoiceService.getAllSumaInvoices();

@@ -28,14 +28,14 @@ public class OwnershipController {
         return ResponseEntity.ok(ownershipService.getByUserEmail(auth.getName()));
     }
 
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('STAFF','ADMIN')")
     @GetMapping("/viewAllOwnership")
     public ResponseEntity<List<OwnershipResponse>> getAll() {
         return ResponseEntity.ok(ownershipService.getAll());
     }
 
     @GetMapping("/my-vehicles")
-@PreAuthorize("hasRole('USER')")
+@PreAuthorize("hasRole('USER','ADMIN')")
 public ResponseEntity<List<VehicleResponse>> getMyVehicles(Authentication auth) {
     return ResponseEntity.ok(ownershipService.getVehicleInMyOwnership(auth));
 }

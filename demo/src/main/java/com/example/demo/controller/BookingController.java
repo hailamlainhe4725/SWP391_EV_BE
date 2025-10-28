@@ -65,7 +65,7 @@ public class BookingController {
     // ===== STAFF API =====
 
     // Staff xem toàn bộ booking
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('STAFF','ADMIN')")
     @GetMapping("/viewAllBooking")
     public ResponseEntity<List<BookingResponse>> getAllBookings() {
         return ResponseEntity.ok(bookingService.getAllBookings());
@@ -73,7 +73,7 @@ public class BookingController {
 
     // Staff thay đổi trạng thái booking (Pending -> Confirmed / Cancelled /
     // Completed)
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('STAFF','ADMIN')")
     @PutMapping("updateStatus")
     public ResponseEntity<BookingResponse> updateStatus(@RequestBody UpdateStatusBookingRequest req) {
         return ResponseEntity.ok(bookingService.updateBookingStatus(req));

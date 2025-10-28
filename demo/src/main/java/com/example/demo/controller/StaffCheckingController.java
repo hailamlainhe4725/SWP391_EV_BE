@@ -19,7 +19,7 @@ public class StaffCheckingController {
 
     private final StaffCheckingService staffCheckingService;
 
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('STAFF','ADMIN')")
     @GetMapping("/viewAllStaffChecking")
     public ResponseEntity<List<StaffCheckingResponse>> getAll() {
         return ResponseEntity.ok(staffCheckingService.getAll());
@@ -39,7 +39,7 @@ public class StaffCheckingController {
     }
 
 
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('STAFF','ADMIN')")
     @PostMapping("/createStaffChecking")
     public ResponseEntity<StaffCheckingResponse> create(Authentication authentication,@RequestBody CreateStaffCheckingRequest req) {
         return ResponseEntity.ok(staffCheckingService.create(authentication,req));
@@ -54,7 +54,7 @@ public ResponseEntity<StaffCheckingResponse> confirm(
     return ResponseEntity.ok(staffCheckingService.confirm(authentication, id, req));
 }
 
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         staffCheckingService.softDelete(id);

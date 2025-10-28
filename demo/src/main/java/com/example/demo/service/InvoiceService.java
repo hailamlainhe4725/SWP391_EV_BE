@@ -5,6 +5,7 @@ import com.example.demo.dto.response.InvoiceResponse;
 import com.example.demo.dto.response.SumaInvoiceResponse;
 import com.example.demo.entity.*;
 import com.example.demo.enums.BillingStatus;
+import com.example.demo.enums.FixFeeType;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.*;
 
@@ -117,6 +118,8 @@ public InvoiceResponse createAutoInvoiceInNewTransaction(Long userId, Long vehic
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     Vehicle vehicle = vehicleRepository.findById(vehicleId)
             .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+    Ownership ownership = ownershipRepository.findByUser_IdAndVehicle_VehicleId(user.getId(), vehicle.getVehicleId())
+    .orElseThrow(() -> new ResourceNotFoundException("ownership not found"));
 
     LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
     LocalDateTime endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth()).atTime(23, 59, 59);
@@ -138,22 +141,23 @@ public InvoiceResponse createAutoInvoiceInNewTransaction(Long userId, Long vehic
     invoice = invoiceRepository.save(invoice);
 
     double total = 0;
-
     // ✅ Fixed Fees
     List<FixedFee> fixedFees = fixedFeeRepository.findByVehicleAndDeletedFalseAndCreatedAtBetween(vehicle, startOfMonth, endOfMonth);
+
     for (FixedFee ff : fixedFees) {
+           
         InvoiceDetail detail = InvoiceDetail.builder()
                 .invoice(invoice)
                 .sourceType("Fixed")
                 .relatedId(ff.getFixedFeeId())
                 .feeType(ff.getType().name())
                 .description(ff.getDescription())
-                .amount(ff.getBaseAmount())
+                .amount((ff.getType() == FixFeeType.OperationPerMonth)?vehicle.getOperationPerMonthPerShare()*ownership.getTotalSharePercentage()*0.1:ff.getBaseAmount()*ownership.getTotalSharePercentage()*0.01)
                 .createdAt(LocalDateTime.now())
                 .deleted(false)
                 .build();
         detailRepository.save(detail);
-        total += ff.getBaseAmount();
+        total += (ff.getType() == FixFeeType.OperationPerMonth)?vehicle.getOperationPerMonthPerShare()*ownership.getTotalSharePercentage()*0.1:ff.getBaseAmount()*ownership.getTotalSharePercentage()*0.01;
     }
 
     // ✅ Variable Fees

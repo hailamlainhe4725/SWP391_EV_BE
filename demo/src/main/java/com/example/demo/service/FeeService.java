@@ -68,7 +68,7 @@ public class FeeService {
         public FeeResponse createFixedFee(CreateFixedFeeRequest req) {
                 Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
-
+                System.out.println(req.getType());
                 FixedFee fee = FixedFee.builder()
                                 .vehicle(vehicle)
                                 .type(req.getType())

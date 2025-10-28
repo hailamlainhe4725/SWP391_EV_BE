@@ -24,7 +24,7 @@ public class UserController {
         UserResponse created = userService.create(req);
         return ResponseEntity.ok(created);
     }
-    @PreAuthorize("hasAnyRole('USER','STAFF')")
+    @PreAuthorize("hasAnyRole('USER','STAFF','ADMIN')")
     @PostMapping("/upload-signature")
     public ResponseEntity<String> uploadSignature(
             @RequestParam("file") MultipartFile file,
@@ -38,7 +38,7 @@ public class UserController {
         return ResponseEntity.ok(res);
     }
 
-    @PreAuthorize("hasAnyRole('USER','STAFF')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN','STAFF')")
     @GetMapping("/me")
     public ResponseEntity<UserResponse> me(Authentication auth) {
         String email = auth.getName();
@@ -46,7 +46,7 @@ public class UserController {
         return ResponseEntity.ok(res);
     }
 
-    @PreAuthorize("hasAnyRole('USER','STAFF')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @PutMapping("/update")
     public ResponseEntity<UserResponse> update(
             @Valid @RequestBody UpdateUserRequest req,
@@ -56,13 +56,13 @@ public class UserController {
         return ResponseEntity.ok(updated);
     }
 
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('STAFF','ADMIN')")
     @GetMapping("/viewAllUser")
     public ResponseEntity<List<UserResponse>> getAll() {
         return ResponseEntity.ok(userService.getAll());
     }
 
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/delete/{user_id}")
     public ResponseEntity<Void> delete(@PathVariable Long user_id) {
         userService.softDelete(user_id);

@@ -38,7 +38,7 @@ public class PaymentService {
                 .orderCode(orderCode)
                 .amount(sumaInvoice.getTotalAmount().intValue())
                 .description("Payment" + sumaInvoice.getMonth())
-                .returnUrl("https://your-frontend.com/payment-success")
+                .returnUrl("https://caleb-idiomatic-milissa.ngrok-free.dev/owner/success")
                 .cancelUrl("https://your-frontend.com/payment-cancel")
                 .build();
 

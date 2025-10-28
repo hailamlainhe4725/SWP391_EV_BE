@@ -48,8 +48,8 @@ public class Vehicle {
 
     // ✅ Viết lại logic tính toán an toàn
     public void calculateFees() {
-        if (batteryCapacityKwh != null)
+        
             this.feeChargingPer1PercentUsed = 2500 * batteryCapacityKwh * 0.01;
-        if (price != null)
+        
             this.operationPerMonthPerShare = price * 0.01 * 0.1;
     }}

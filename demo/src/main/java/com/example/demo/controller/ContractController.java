@@ -18,31 +18,31 @@ public class ContractController {
 
     private final ContractService contractService;
 
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/createContract")
     public ResponseEntity<ContractResponse> create(@RequestBody CreateContractRequest req) {
         return ResponseEntity.ok(contractService.create(req));
     }
 
-    @PreAuthorize("hasAnyRole('USER','STAFF')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @GetMapping("/getAllContract")
     public ResponseEntity<List<ContractResponse>> getAll() {
         return ResponseEntity.ok(contractService.getAll());
     }
 
-    @PreAuthorize("hasAnyRole('USER','STAFF')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @GetMapping("/unit/{id}")
     public ResponseEntity<ContractResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(contractService.getById(id));
     }
 
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ContractResponse> updateStatus(@PathVariable Long id, @RequestBody StatusUpdateRequest request) {
         return ResponseEntity.ok(contractService.updateStatus(id, request.getStatus()));
     }
 
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         contractService.softDelete(id);

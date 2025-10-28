@@ -22,14 +22,14 @@ public class VoteController {
     private final VoteService voteService;
 
     // ===== STAFF tạo chủ đề biểu quyết =====
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('STAFF','ADMIN')")
     @PostMapping("/topics")
     public ResponseEntity<VoteTopicResponse> createTopic(Authentication authentication,@RequestBody CreateVoteTopicRequest req) {
         VoteTopicResponse res = voteService.createTopic(authentication,req);
         return ResponseEntity.ok(res);
     }
 
-        @PreAuthorize("hasRole('STAFF')")
+        @PreAuthorize("hasRole('STAFF','ADMIN')")
     @GetMapping("/viewAllTopic")
     public ResponseEntity<List<VoteTopicResponse>> viewAllVoteTopic() {
         List<VoteTopicResponse> res = voteService.getAllVoteTopic();
@@ -52,7 +52,7 @@ public class VoteController {
     }
 
     // ===== STAFF tính kết quả của một topic =====
-    @PreAuthorize("hasRole('STAFF')")
+    @PreAuthorize("hasRole('STAFF','ADMIN')")
     @PostMapping("/topics/{topicId}/calculate")
     public ResponseEntity<VoteTopicResponse> calculateResult(@PathVariable Long topicId) {
         VoteTopicResponse res = voteService.calculateResult(topicId);
@@ -60,7 +60,7 @@ public class VoteController {
     }
 
     // ===== USER hoặc STAFF xem danh sách phiếu của topic =====
-    @PreAuthorize("hasAnyRole('USER','STAFF')")
+    @PreAuthorize("hasAnyRole('USER','STAFF','ADMIN')")
     @GetMapping("/topic/{topicId}/find")
     public ResponseEntity<List<VoteResponse>> getVotes(@PathVariable Long topicId) {
         List<VoteResponse> res = voteService.getVotes(topicId);
