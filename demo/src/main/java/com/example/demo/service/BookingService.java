@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -29,91 +31,115 @@ public class BookingService {
         private final OwnershipRepository ownershipRepository;
 
         // ====================== CREATE BOOKING ======================
-        public BookingResponse createBooking(Authentication authentication,CreateBookingRequest req) {
-                User user = userRepository.findByEmail(authentication.getName())
-                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-                Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
 
-                Ownership ownership = ownershipRepository
-                                .findByUser_IdAndVehicle_VehicleId(user.getId(), vehicle.getVehicleId())
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "You are not a co-owner of this vehicle"));
+public BookingResponse createBooking(Authentication authentication, CreateBookingRequest req) {
+    // --- 1️⃣ Xác thực user và ownership ---
+    User user = userRepository.findByEmail(authentication.getName())
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
+            .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
 
-                // Kiểm tra giới hạn km
-                if (ownership.isOverKmLimit()) {
-                        throw new RuntimeException(
-                                        "You have exceeded your monthly km limit for this vehicle. Booking blocked.");
-                }
-                    
-                if (!req.getEndTime().isAfter(req.getStartTime())) {
-                        throw new RuntimeException("End time must be after start time.");
-                        }
-                // Giới hạn ngày sử dụng trong tháng
-                Double usedDaysRaw = bookingRepository.getUsedDaysThisMonth(user.getId(), vehicle.getVehicleId());
-                double usedDays = (usedDaysRaw != null) ? usedDaysRaw : 0.0;
-                double allowedDays = 30 * (ownership.getTotalSharePercentage() / 100.0);
-                double usageRatio = usedDays / allowedDays;
+    Ownership ownership = ownershipRepository
+            .findByUser_IdAndVehicle_VehicleId(user.getId(), vehicle.getVehicleId())
+            .orElseThrow(() -> new ResourceNotFoundException("You are not a co-owner of this vehicle"));
 
-                if (usageRatio >= 1.0) {
-                        throw new RuntimeException("You have reached your monthly usage limit for this vehicle.");
-                }
+    // --- 2️⃣ Validate thời gian hợp lệ ---
+    if (!req.getEndTime().isAfter(req.getStartTime())) {
+        throw new RuntimeException("End time must be after start time.");
+    }
+    if (req.getStartTime().isBefore(LocalDateTime.now())) {
+        throw new RuntimeException("Cannot create booking in the past.");
+    }
 
-                if (req.getStartTime().isBefore(LocalDateTime.now())) {
-                throw new RuntimeException("Cannot create booking in the past.");
-                }
-                // Tính điểm ưu tiên
-                double priorityScore = ownership.getTotalSharePercentage() / (1 + usedDays);
+    // --- 3️⃣ Kiểm tra giới hạn km ---
+    if (ownership.isOverKmLimit()) {
+        throw new RuntimeException("You have exceeded your monthly km limit for this vehicle. Booking blocked.");
+    }
 
+    // --- 4️⃣ Kiểm tra tỷ lệ sử dụng trong tháng ---
+    Double usedDaysRaw = bookingRepository.getUsedDaysThisMonth(user.getId(), vehicle.getVehicleId());
+    double usedDays = (usedDaysRaw != null) ? usedDaysRaw : 0.0;
+    double allowedDays = 30 * (ownership.getTotalSharePercentage() / 100.0);
+    double usageRatio = usedDays / allowedDays;
 
-                // Tìm các booking trùng thời gian
-                List<Booking> conflicts = bookingRepository.findConflictingBookings(
-                                vehicle.getVehicleId(), req.getStartTime(), req.getEndTime());
+    if (usageRatio >= 1.0) {
+        throw new RuntimeException("You have reached your monthly usage limit for this vehicle.");
+    }
 
-                                // Nếu đã có booking được Confirmed → chặn luôn
-                boolean hasConfirmed = conflicts.stream()
-                        .anyMatch(b -> b.getBookingStatus() == BookingStatus.Confirmed ||b.getBookingStatus() == BookingStatus.Completed||b.getBookingStatus() == BookingStatus.InProgress );
+    // --- 5️⃣ Tính priority score (60% share – 40% usage) ---
+    double shareScore = ownership.getTotalSharePercentage() / 100.0;
+    double usageScore = 1 - usageRatio;
+    double priorityScore = (0.6 * shareScore) + (0.4 * usageScore);
 
-                if (hasConfirmed) {
-                throw new RuntimeException("This time slot has already been booked by another co-owner.");
-                }
-                                Booking booking = Booking.builder()
-                                .user(user)
-                                .vehicle(vehicle)
-                                .startTime(req.getStartTime())
-                                .endTime(req.getEndTime())
-                                .bookingStatus(BookingStatus.Pending)
-                                .priorityScore(priorityScore)
-                                .deleted(false)
-                                .createdAt(LocalDateTime.now())
-                                .build();
+    // --- 6️⃣ Tạo đối tượng Booking mới ---
+    Booking booking = Booking.builder()
+            .user(user)
+            .vehicle(vehicle)
+            .startTime(req.getStartTime())
+            .endTime(req.getEndTime())
+            .bookingStatus(BookingStatus.Pending)
+            .priorityScore(priorityScore)
+            .deleted(false)
+            .createdAt(LocalDateTime.now())
+            .build();
 
-                // Thêm booking mới vào danh sách đang cạnh tranh
-                conflicts.add(booking);
+    // --- 7️⃣ Duyệt từng ngày trong chuỗi ---
+    LocalDate startDate = req.getStartTime().toLocalDate();
+    LocalDate endDate = req.getEndTime().toLocalDate();
 
-                // Tìm người có priority cao nhất
-                Booking topBooking = conflicts.stream()
-                        .max(Comparator.comparing(Booking::getPriorityScore)
-                                .thenComparing(Booking::getCreatedAt))
-                        .orElse(null);
+        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
 
-                for (Booking b : conflicts) {
+        Booking firstBooking = bookingRepository.findEarliestBookingForDate(vehicle.getVehicleId(), date);
+
+        if (firstBooking == null) {
+                // ✅ Chưa có ai đặt ngày này -> booking này là first
+                continue;
+        }
+
+        long hoursSinceFirst = Duration.between(firstBooking.getCreatedAt(), booking.getCreatedAt()).toHours();
+        long hoursUntilUse = Duration.between(LocalDateTime.now(), date.atTime(4, 0)).toHours();
+        long windowHours = getWindowHoursForUse(hoursUntilUse);
+
+        if (hoursSinceFirst > windowHours) {
+                booking.setBookingStatus(BookingStatus.Cancelled);
+                continue;
+        }
+
+        // ✅ Lấy tất cả booking trong ngày (bao gồm cả booking mới)
+        List<Booking> dayBookings = bookingRepository.findBookingsForDate(vehicle.getVehicleId(), date);
+        dayBookings.add(booking); // 👈 Thêm booking mới vào danh sách để tranh chấp
+
+        // ✅ Tìm booking có priority cao nhất
+        Booking topBooking = dayBookings.stream()
+                .max(Comparator.comparing(Booking::getPriorityScore)
+                        .thenComparing(Booking::getCreatedAt))
+                .orElse(booking);
+
+        for (Booking b : dayBookings) {
                 if (b.equals(topBooking)) {
-                        b.setBookingStatus(BookingStatus.Pending);
+                b.setBookingStatus(BookingStatus.Pending); // staff confirm sau
                 } else {
-                        b.setBookingStatus(BookingStatus.Cancelled);
+                b.setBookingStatus(BookingStatus.Cancelled);
                 }
                 bookingRepository.save(b);
-                }
-
-                // Nếu booking của user hiện tại là người thắng
-                if (topBooking.equals(booking)) {
-                return mapToResponse(booking);
-                } else {
-                throw new RuntimeException("Your booking was not confirmed. A co-owner with higher priority won this slot.");
-                }
-
         }
+        }
+
+
+        // --- 8️⃣ Lưu booking mới ---
+        bookingRepository.save(booking);
+        return mapToResponse(booking);
+        }
+
+
+    private long getWindowHoursForUse(long hoursUntilUse) {
+        if (hoursUntilUse <= 4) return 0;
+        if (hoursUntilUse <= 24) return 4;
+        if (hoursUntilUse <= 72) return 20;
+        if (hoursUntilUse <= 168) return 48;
+        return 72; // quá xa -> không cho tranh chấp
+    }
+
 
         // ====================== GET BOOKINGS ======================
 

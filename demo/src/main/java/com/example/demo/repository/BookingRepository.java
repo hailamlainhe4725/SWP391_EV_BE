@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -65,4 +66,25 @@ Double getUsedDaysThisMonth(Long userId, Long vehicleId);
 
   List<Booking> findByVehicle_VehicleIdAndBookingStatusNot(Long vehicleId, BookingStatus cancelled);
 
-}
+
+      @Query("""
+        SELECT b FROM Booking b
+        WHERE b.vehicle.vehicleId = :vehicleId
+          AND b.deleted = false
+          AND DATE(b.startTime) <= :date
+          AND DATE(b.endTime) >= :date
+        ORDER BY b.createdAt ASC
+        LIMIT 1
+    """)
+    Booking findEarliestBookingForDate(Long vehicleId, LocalDate date);
+
+
+    
+    @Query("""
+    SELECT b FROM Booking b
+    WHERE b.vehicle.vehicleId = :vehicleId
+      AND b.deleted = false
+      AND FUNCTION('DATE', b.startTime) = :targetDate
+""")
+List<Booking> findBookingsForDate(Long vehicleId, LocalDate targetDate);
+  }
