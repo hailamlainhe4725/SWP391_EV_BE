@@ -24,13 +24,6 @@ public class UserController {
         UserResponse created = userService.create(req);
         return ResponseEntity.ok(created);
     }
-    @PreAuthorize("hasAnyRole('USER','STAFF','ADMIN')")
-    @PostMapping("/upload-signature")
-    public ResponseEntity<String> uploadSignature(
-            @RequestParam("file") MultipartFile file,
-            Authentication auth) {
-        return ResponseEntity.ok(userService.uploadSignature(file, auth));
-    }
 
     @PostMapping("/login") // login endpoint (returns token via AuthResponse)
     public ResponseEntity<AuthResponse> auth(@Valid @RequestBody AuthRequest request) {
@@ -56,7 +49,7 @@ public class UserController {
         return ResponseEntity.ok(updated);
     }
 
-    @PreAuthorize("hasRole('STAFF','ADMIN')")
+    @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
     @GetMapping("/viewAllUser")
     public ResponseEntity<List<UserResponse>> getAll() {
         return ResponseEntity.ok(userService.getAll());

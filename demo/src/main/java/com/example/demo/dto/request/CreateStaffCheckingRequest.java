@@ -1,5 +1,7 @@
 package com.example.demo.dto.request;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import com.example.demo.enums.CheckingStatus;
 import com.example.demo.enums.StaffCheckingType;
 
@@ -23,5 +25,5 @@ public class CreateStaffCheckingRequest {
     String notes;
     CheckingStatus status; // PENDING, CONFIRMED, REJECTED
      String userComment; // ghi chú của user khi reject
-
+        MultipartFile staffSignature;
 }

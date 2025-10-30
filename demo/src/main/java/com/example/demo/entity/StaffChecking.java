@@ -65,4 +65,8 @@ private CheckingStatus status; // PENDING, CONFIRMED, REJECTED
 
 private String userComment; // ghi chú của user khi reject
 
+private String staffSignatureUrl;
+private String userSignatureUrl;
+
+
 }

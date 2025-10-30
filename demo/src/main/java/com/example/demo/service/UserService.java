@@ -85,28 +85,8 @@ private JwtUtils jwtUtils;
         return mapToResponse(user);
     }
 
-    public String uploadSignature(MultipartFile file, Authentication auth) {
-        User user = userRepository.findByEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        try {
-            String uploadDir = "uploads/signatures/";
-            File dir = new File(uploadDir);
-            if (!dir.exists()) dir.mkdirs();
 
-            String fileName = user.getId() + "_" + file.getOriginalFilename();
-            Path path = Paths.get(uploadDir + fileName);
-            Files.write(path, file.getBytes());
-
-            String url = "/uploads/signatures/" + fileName;
-            user.setSignatureImageUrl(url);
-            userRepository.save(user);
-
-            return url;
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to upload signature", e);
-        }
-    }
 
     // ===== Update =====
     public UserResponse update(String email, UpdateUserRequest req) {
