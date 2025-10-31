@@ -47,4 +47,11 @@ public class Booking {
     BookingStatus bookingStatus = BookingStatus.Pending; // PENDING, CONFIRMED, CANCELLED, COMPLETED
     @Column(name = "deleted")
     boolean deleted = false;
+    @Column(nullable = false)
+    private boolean disputed = false;
+
+    @Column
+    private Boolean disputeWinner; // true = thắng, false = thua, null = chưa tranh chấp
+
+
 }

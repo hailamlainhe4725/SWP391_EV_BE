@@ -40,16 +40,17 @@ public class StaffCheckingController {
 
 
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
-    @PostMapping("/createStaffChecking")
-    public ResponseEntity<StaffCheckingResponse> create(Authentication authentication,@RequestBody CreateStaffCheckingRequest req) {
+    @PostMapping(value = "/createStaffChecking", consumes = "multipart/form-data")
+    
+    public ResponseEntity<StaffCheckingResponse> create(Authentication authentication,@ModelAttribute CreateStaffCheckingRequest req) {
         return ResponseEntity.ok(staffCheckingService.create(authentication,req));
     }
     @PreAuthorize("hasRole('USER')")
-@PostMapping("/{id}/confirm")
+@PostMapping(value ="/{id}/confirm",consumes = "multipart/form-data")
 public ResponseEntity<StaffCheckingResponse> confirm(
         Authentication authentication,
         @PathVariable Long id,
-        @RequestBody StaffCheckingConfirmRequest req
+        @ModelAttribute StaffCheckingConfirmRequest req
 ) {
     return ResponseEntity.ok(staffCheckingService.confirm(authentication, id, req));
 }

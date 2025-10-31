@@ -14,5 +14,6 @@ public interface OwnerContractRepository extends JpaRepository<OwnerContract, Lo
     List<OwnerContract> findByContract_ContractId(Long contractId);
 
     List<OwnerContract> findByContract_Vehicle_VehicleId(Long vehicleId);
+    List<OwnerContract> findByUser_Id(Long userId);
 
 }

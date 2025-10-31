@@ -87,4 +87,7 @@ Double getUsedDaysThisMonth(Long userId, Long vehicleId);
       AND FUNCTION('DATE', b.startTime) = :targetDate
 """)
 List<Booking> findBookingsForDate(Long vehicleId, LocalDate targetDate);
+
+List<Booking> findByVehicle_VehicleIdAndDisputedTrue(Long vehicleId);
+
   }

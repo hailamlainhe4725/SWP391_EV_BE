@@ -152,12 +152,12 @@ public InvoiceResponse createAutoInvoiceInNewTransaction(Long userId, Long vehic
                 .relatedId(ff.getFixedFeeId())
                 .feeType(ff.getType().name())
                 .description(ff.getDescription())
-                .amount((ff.getType() == FixFeeType.OperationPerMonth)?vehicle.getOperationPerMonthPerShare()*ownership.getTotalSharePercentage()*0.1:ff.getBaseAmount()*ownership.getTotalSharePercentage()*0.01)
+                .amount(ff.getBaseAmount()*ownership.getTotalSharePercentage()*0.01)
                 .createdAt(LocalDateTime.now())
                 .deleted(false)
                 .build();
         detailRepository.save(detail);
-        total += (ff.getType() == FixFeeType.OperationPerMonth)?vehicle.getOperationPerMonthPerShare()*ownership.getTotalSharePercentage()*0.1:ff.getBaseAmount()*ownership.getTotalSharePercentage()*0.01;
+        total += ff.getBaseAmount()*ownership.getTotalSharePercentage()*0.01;
     }
 
     // ✅ Variable Fees

@@ -3,17 +3,21 @@ package com.example.demo.service;
 import com.example.demo.dto.request.CreateContractRequest;
 import com.example.demo.dto.response.ContractResponse;
 import com.example.demo.entity.Contract;
+import com.example.demo.entity.FixedFee;
 import com.example.demo.entity.OwnerContract;
 import com.example.demo.entity.Ownership;
 import com.example.demo.entity.User;
 import com.example.demo.entity.Vehicle;
 import com.example.demo.enums.ContractStatus;
+import com.example.demo.enums.FixFeeType;
 import com.example.demo.enums.OwnerContractStatus;
 import com.example.demo.enums.OwnershipStatus;
+import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,6 +32,7 @@ public class ContractService {
     private final ContractRepository contractRepository;
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
+    private final FixedFeeRepository fixedFeeRepository;
 
 
     public List<ContractResponse> getAll() {
@@ -93,11 +98,75 @@ public class ContractService {
                 ownership.setUsedKmThisMonth(0.0);
 
                 ownershipRepository.save(ownership);
+                createDefaultFixedFeesForVehicle(vehicle);
         }
 
         // ===== 4. Trả về response =====
         return mapToResponse(contract);
         }
+
+        private void createDefaultFixedFeesForVehicle(Vehicle vehicle) {
+    List<FixedFee> fees = List.of(
+            FixedFee.builder()
+                    .vehicle(vehicle)
+                    .type(FixFeeType.Insurance)
+                    .baseAmount(1_000_000.0)
+                    .description("Monthly vehicle insurance")
+                    .createdAt(LocalDateTime.now())
+                    .deleted(false)
+                    .build(),
+            FixedFee.builder()
+                    .vehicle(vehicle)
+                    .type(FixFeeType.Registration)
+                    .baseAmount(130_000.0)
+                    .description("Registration and road fee")
+                    .createdAt(LocalDateTime.now())
+                    .deleted(false)
+                    .build(),
+            FixedFee.builder()
+                    .vehicle(vehicle)
+                    .type(FixFeeType.Maintenance)
+                    .baseAmount(800_000.0)
+                    .description("Periodic maintenance")
+                    .createdAt(LocalDateTime.now())
+                    .deleted(false)
+                    .build(),
+            FixedFee.builder()
+                    .vehicle(vehicle)
+                    .type(FixFeeType.Cleaning)
+                    .baseAmount(240_000.0)
+                    .description("Car cleaning service")
+                    .createdAt(LocalDateTime.now())
+                    .deleted(false)
+                    .build(),
+            FixedFee.builder()
+                    .vehicle(vehicle)
+                    .type(FixFeeType.OperationPerMonth)
+                    .baseAmount(1_500_000.0)
+                    .description("General monthly operation cost")
+                    .createdAt(LocalDateTime.now())
+                    .deleted(false)
+                    .build()
+    );
+
+    fixedFeeRepository.saveAll(fees);
+        }
+
+
+        public List<ContractResponse> getContractsByUser(Authentication authentication) {
+    User user = userRepository.findByEmail(authentication.getName())
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    List<Contract> contracts = contractRepository.findByUser_Id(user.getId());
+
+    if (contracts.isEmpty()) {
+        throw new RuntimeException("You have no contracts.");
+    }
+
+    return contracts.stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+}
 
 
     public ContractResponse updateStatus(Long id, ContractStatus status) {

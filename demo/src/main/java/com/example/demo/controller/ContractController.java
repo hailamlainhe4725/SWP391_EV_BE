@@ -8,6 +8,7 @@ import com.example.demo.service.ContractService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -24,17 +25,18 @@ public class ContractController {
         return ResponseEntity.ok(contractService.create(req));
     }
 
-    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/getAllContract")
     public ResponseEntity<List<ContractResponse>> getAll() {
         return ResponseEntity.ok(contractService.getAll());
     }
 
-    @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    @GetMapping("/unit/{id}")
-    public ResponseEntity<ContractResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(contractService.getById(id));
-    }
+    @PreAuthorize("hasRole('USER')")
+@GetMapping("/myContracts")
+public ResponseEntity<List<ContractResponse>> getMyContracts(Authentication authentication) {
+    return ResponseEntity.ok(contractService.getContractsByUser(authentication));
+}
+
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")

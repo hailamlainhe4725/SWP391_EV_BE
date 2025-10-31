@@ -88,4 +88,12 @@ public ResponseEntity<List<BookingResponse>> getVehicleSchedule(@PathVariable Lo
     return ResponseEntity.ok(schedules);
 }
 
+//theo doi tranh chap theo xe 
+    @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
+@GetMapping("/vehicle/{vehicleId}/disputes")
+public ResponseEntity<List<BookingResponse>> getDisputedBookingsByVehicle(@PathVariable Long vehicleId) {
+    List<BookingResponse> responses = bookingService.getDisputedBookingsByVehicle(vehicleId);
+    return ResponseEntity.ok(responses);
+}
+
 }

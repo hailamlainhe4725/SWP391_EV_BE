@@ -242,22 +242,28 @@ public class StaffCheckingService {
     }
 
     // === Upload chữ ký (dùng chung)
-    private String uploadSignatureFile(MultipartFile file, String prefix) {
-        if (file == null || file.isEmpty()) return null;
-
-        try {
-            String uploadDir = "uploads/signatures/";
-            Files.createDirectories(Paths.get(uploadDir));
-
-            String fileName = prefix + "_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            Path filePath = Paths.get(uploadDir, fileName);
-            file.transferTo(filePath);
-
-            return "/uploads/signatures/" + fileName;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to save signature file", e);
-        }
+private String uploadSignatureFile(MultipartFile file, String prefix) {
+    if (file == null || file.isEmpty()) {
+        System.out.println("⚠️ No file uploaded for " + prefix);
+        return null;
     }
+
+    try {
+        String uploadDir = "uploads/signatures/";
+        Files.createDirectories(Paths.get(uploadDir));
+
+        String fileName = prefix + "_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
+        Path filePath = Paths.get(uploadDir, fileName);
+        file.transferTo(filePath);
+
+        System.out.println("✅ Saved signature file: " + fileName);
+        return "/uploads/signatures/" + fileName;
+    } catch (Exception e) {
+        e.printStackTrace();
+        throw new RuntimeException("Failed to save signature file", e);
+    }
+}
+
 
     // === Mapper ===
     private StaffCheckingResponse mapToResponse(StaffChecking sc) {

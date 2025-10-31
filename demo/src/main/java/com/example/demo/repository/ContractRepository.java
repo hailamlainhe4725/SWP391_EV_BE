@@ -10,4 +10,6 @@ public interface ContractRepository extends JpaRepository<Contract, Long> {
     List<Contract> findByUser_EmailAndDeletedFalse(String email);
 
     List<Contract> findByDeletedFalse();
+    List<Contract> findByUser_Id(Long userId);
+
 }

@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,99 +34,119 @@ public class BookingService {
 
         // ====================== CREATE BOOKING ======================
 
-public BookingResponse createBooking(Authentication authentication, CreateBookingRequest req) {
-    // --- 1️⃣ Xác thực user và ownership ---
-    User user = userRepository.findByEmail(authentication.getName())
-            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-    Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
-            .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+        public BookingResponse createBooking(Authentication authentication, CreateBookingRequest req) {
+        // --- 1️⃣ Xác thực user và ownership ---
+        User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
 
-    Ownership ownership = ownershipRepository
-            .findByUser_IdAndVehicle_VehicleId(user.getId(), vehicle.getVehicleId())
-            .orElseThrow(() -> new ResourceNotFoundException("You are not a co-owner of this vehicle"));
+        Ownership ownership = ownershipRepository
+                .findByUser_IdAndVehicle_VehicleId(user.getId(), vehicle.getVehicleId())
+                .orElseThrow(() -> new ResourceNotFoundException("You are not a co-owner of this vehicle"));
 
-    // --- 2️⃣ Validate thời gian hợp lệ ---
-    if (!req.getEndTime().isAfter(req.getStartTime())) {
-        throw new RuntimeException("End time must be after start time.");
-    }
-    if (req.getStartTime().isBefore(LocalDateTime.now())) {
-        throw new RuntimeException("Cannot create booking in the past.");
-    }
+        // --- 2️⃣ Validate thời gian hợp lệ ---
+        if (!req.getEndTime().isAfter(req.getStartTime())) {
+                throw new RuntimeException("End time must be after start time.");
+        }
+        if (req.getStartTime().isBefore(LocalDateTime.now())) {
+                throw new RuntimeException("Cannot create booking in the past.");
+        }
 
-    // --- 3️⃣ Kiểm tra giới hạn km ---
-    if (ownership.isOverKmLimit()) {
-        throw new RuntimeException("You have exceeded your monthly km limit for this vehicle. Booking blocked.");
-    }
+        // --- 3️⃣ Kiểm tra giới hạn km ---
+        if (ownership.isOverKmLimit()) {
+                throw new RuntimeException("You have exceeded your monthly km limit for this vehicle. Booking blocked.");
+        }
 
-    // --- 4️⃣ Kiểm tra tỷ lệ sử dụng trong tháng ---
-    Double usedDaysRaw = bookingRepository.getUsedDaysThisMonth(user.getId(), vehicle.getVehicleId());
-    double usedDays = (usedDaysRaw != null) ? usedDaysRaw : 0.0;
-    double allowedDays = 30 * (ownership.getTotalSharePercentage() / 100.0);
-    double usageRatio = usedDays / allowedDays;
+        // --- 4️⃣ Kiểm tra tỷ lệ sử dụng trong tháng (bao gồm booking sắp đặt) ---
+        Double usedDaysRaw = bookingRepository.getUsedDaysThisMonth(user.getId(), vehicle.getVehicleId());
+        double usedDays = (usedDaysRaw != null) ? usedDaysRaw : 0.0;
 
-    if (usageRatio >= 1.0) {
-        throw new RuntimeException("You have reached your monthly usage limit for this vehicle.");
-    }
+        long bookingDays = ChronoUnit.DAYS.between(
+                req.getStartTime().toLocalDate(),
+                req.getEndTime().toLocalDate()
+        ) + 1;
 
-    // --- 5️⃣ Tính priority score (60% share – 40% usage) ---
-    double shareScore = ownership.getTotalSharePercentage() / 100.0;
-    double usageScore = 1 - usageRatio;
-    double priorityScore = (0.6 * shareScore) + (0.4 * usageScore);
+        int totalDaysInMonth = YearMonth.now().lengthOfMonth();
+        double allowedDays = totalDaysInMonth * (ownership.getTotalSharePercentage() / 100.0);
 
-    // --- 6️⃣ Tạo đối tượng Booking mới ---
-    Booking booking = Booking.builder()
-            .user(user)
-            .vehicle(vehicle)
-            .startTime(req.getStartTime())
-            .endTime(req.getEndTime())
-            .bookingStatus(BookingStatus.Pending)
-            .priorityScore(priorityScore)
-            .deleted(false)
-            .createdAt(LocalDateTime.now())
-            .build();
+        // ✅ Làm tròn xuống, không bao giờ vượt số ngày trong tháng
+        allowedDays = Math.floor(allowedDays);
 
-    // --- 7️⃣ Duyệt từng ngày trong chuỗi ---
-    LocalDate startDate = req.getStartTime().toLocalDate();
-    LocalDate endDate = req.getEndTime().toLocalDate();
+        double projectedUsageRatio = (usedDays + bookingDays) / allowedDays;
+
+        if (projectedUsageRatio > 1.0) {
+                throw new RuntimeException("Booking exceeds your monthly usage limit for this vehicle.");
+        }
+
+        // --- 5️⃣ Tính priority score (60% share – 40% usage) ---
+        double shareScore = ownership.getTotalSharePercentage() / 100.0;
+        double usageScore = 1 - (usedDays / allowedDays);
+        double priorityScore = (0.6 * shareScore) + (0.4 * usageScore);
+
+        // --- 6️⃣ Tạo đối tượng Booking mới ---
+        Booking booking = Booking.builder()
+                .user(user)
+                .vehicle(vehicle)
+                .startTime(req.getStartTime())
+                .endTime(req.getEndTime())
+                .bookingStatus(BookingStatus.Pending)
+                .priorityScore(priorityScore)
+                .deleted(false)
+                .createdAt(LocalDateTime.now())
+                // ✅ Thêm cờ tranh chấp
+                .disputed(false)
+                .disputeWinner(null)
+                .build();
+
+        // --- 7️⃣ Duyệt từng ngày trong chuỗi ---
+        LocalDate startDate = req.getStartTime().toLocalDate();
+        LocalDate endDate = req.getEndTime().toLocalDate();
 
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
 
-        Booking firstBooking = bookingRepository.findEarliestBookingForDate(vehicle.getVehicleId(), date);
+                Booking firstBooking = bookingRepository.findEarliestBookingForDate(vehicle.getVehicleId(), date);
 
-        if (firstBooking == null) {
+                if (firstBooking == null) {
                 // ✅ Chưa có ai đặt ngày này -> booking này là first
                 continue;
-        }
-
-        long hoursSinceFirst = Duration.between(firstBooking.getCreatedAt(), booking.getCreatedAt()).toHours();
-        long hoursUntilUse = Duration.between(LocalDateTime.now(), date.atTime(4, 0)).toHours();
-        long windowHours = getWindowHoursForUse(hoursUntilUse);
-
-        if (hoursSinceFirst > windowHours) {
-                booking.setBookingStatus(BookingStatus.Cancelled);
-                continue;
-        }
-
-        // ✅ Lấy tất cả booking trong ngày (bao gồm cả booking mới)
-        List<Booking> dayBookings = bookingRepository.findBookingsForDate(vehicle.getVehicleId(), date);
-        dayBookings.add(booking); // 👈 Thêm booking mới vào danh sách để tranh chấp
-
-        // ✅ Tìm booking có priority cao nhất
-        Booking topBooking = dayBookings.stream()
-                .max(Comparator.comparing(Booking::getPriorityScore)
-                        .thenComparing(Booking::getCreatedAt))
-                .orElse(booking);
-
-        for (Booking b : dayBookings) {
-                if (b.equals(topBooking)) {
-                b.setBookingStatus(BookingStatus.Pending); // staff confirm sau
-                } else {
-                b.setBookingStatus(BookingStatus.Cancelled);
                 }
-                bookingRepository.save(b);
-        }
-        }
 
+                long hoursSinceFirst = Duration.between(firstBooking.getCreatedAt(), booking.getCreatedAt()).toHours();
+                long hoursUntilUse = Duration.between(LocalDateTime.now(), date.atTime(0, 0)).toHours();
+                long windowHours = getWindowHoursForUse(hoursUntilUse);
+
+                if (hoursSinceFirst > windowHours) {
+                booking.setBookingStatus(BookingStatus.Cancelled);
+                booking.setDisputed(true);
+                booking.setDisputeWinner(false);
+                continue;
+                }
+
+                // ✅ Lấy tất cả booking trong ngày (bao gồm cả booking mới)
+                List<Booking> dayBookings = bookingRepository.findBookingsForDate(vehicle.getVehicleId(), date);
+                dayBookings.add(booking); // 👈 Thêm booking mới vào danh sách để tranh chấp
+
+                // ✅ Tìm booking có priority cao nhất
+                Booking topBooking = dayBookings.stream()
+                        .max(Comparator.comparing(Booking::getPriorityScore)
+                                .thenComparing(Booking::getCreatedAt))
+                        .orElse(booking);
+
+                for (Booking b : dayBookings) {
+                b.setDisputed(true); // có tranh chấp
+
+                if (b.equals(topBooking)) {
+                        b.setBookingStatus(BookingStatus.Pending); // staff confirm sau
+                        b.setDisputeWinner(true);
+                } else {
+                        b.setBookingStatus(BookingStatus.Cancelled);
+                        b.setDisputeWinner(false);
+                }
+
+                bookingRepository.save(b);
+                }
+        }
 
         // --- 8️⃣ Lưu booking mới ---
         bookingRepository.save(booking);
@@ -132,13 +154,14 @@ public BookingResponse createBooking(Authentication authentication, CreateBookin
         }
 
 
-    private long getWindowHoursForUse(long hoursUntilUse) {
-        if (hoursUntilUse <= 4) return 0;
-        if (hoursUntilUse <= 24) return 4;
-        if (hoursUntilUse <= 72) return 20;
-        if (hoursUntilUse <= 168) return 48;
-        return 72; // quá xa -> không cho tranh chấp
-    }
+
+        private long getWindowHoursForUse(long hoursUntilUse) {
+                if (hoursUntilUse <= 4) return 0;
+                if (hoursUntilUse <= 24) return 4;
+                if (hoursUntilUse <= 72) return 20;
+                if (hoursUntilUse <= 168) return 48;
+                return 72; // quá xa -> không cho tranh chấp
+        }
 
 
         // ====================== GET BOOKINGS ======================
@@ -181,6 +204,18 @@ public BookingResponse createBooking(Authentication authentication, CreateBookin
 
         }
 
+        public List<BookingResponse> getDisputedBookingsByVehicle(Long vehicleId) {
+    List<Booking> disputedBookings = bookingRepository.findByVehicle_VehicleIdAndDisputedTrue(vehicleId);
+
+    if (disputedBookings.isEmpty()) {
+        throw new RuntimeException("No disputed bookings found for this vehicle.");
+    }
+
+    return disputedBookings.stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+}
+
         // ====================== UPDATE STATUS ======================
         public BookingResponse updateBookingStatus(UpdateStatusBookingRequest request) {
                 Booking booking = bookingRepository.findById(request.getId())
@@ -219,20 +254,23 @@ public BookingResponse createBooking(Authentication authentication, CreateBookin
         }
 
         // ====================== MAPPING ======================
-        private BookingResponse mapToResponse(Booking b) {
-                return BookingResponse.builder()
-                                .bookingId(b.getBookingId())
-                                .vehicleId(b.getVehicle().getVehicleId())
-                                .vehicleName(b.getVehicle().getBrand() + " " + b.getVehicle().getModel())
-                                .userName(b.getUser().getFullName())
-                                .userEmail(b.getUser().getEmail())
-                                .startTime(b.getStartTime())
-                                .endTime(b.getEndTime())
-                                .bookingStatus(b.getBookingStatus().name())
-                                .priorityScore(b.getPriorityScore())
-                                .createdAt(b.getCreatedAt())
-                                .build();
+        private BookingResponse mapToResponse(Booking booking) {
+        return BookingResponse.builder()
+                .bookingId(booking.getBookingId())
+                .vehicleId(booking.getVehicle().getVehicleId())
+                .vehicleName(booking.getVehicle().getModel()+booking.getVehicle().getPlateNumber())
+                .userName(booking.getUser().getFullName())
+                .userEmail(booking.getUser().getEmail())
+                .bookingStatus(booking.getBookingStatus().name())
+                .priorityScore(booking.getPriorityScore())
+                .startTime(booking.getStartTime())
+                .endTime(booking.getEndTime())
+                .createdAt(booking.getCreatedAt())
+                .disputed(booking.isDisputed())
+                .disputeWinner(booking.getDisputeWinner())
+                .build();
         }
+
 
         private BookingVehicleResponse mapToResponseB(Booking booking) {
     Vehicle v = booking.getVehicle();

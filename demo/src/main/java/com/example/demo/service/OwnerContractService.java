@@ -4,8 +4,11 @@ import com.example.demo.dto.request.CreateOwnerContractRequest;
 import com.example.demo.dto.response.OwnerContractResponse;
 import com.example.demo.entity.*;
 import com.example.demo.enums.*;
+import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.*;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,6 +27,21 @@ public class OwnerContractService {
                 return ownerContractRepository.findAll().stream()
                                 .map(this::mapToResponse)
                                 .collect(Collectors.toList());
+        }
+
+        public List<OwnerContractResponse> getContractsByUser(Authentication authentication) {
+    User user = userRepository.findByEmail(authentication.getName())
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    List<OwnerContract> contracts = ownerContractRepository.findByUser_Id(user.getId());
+
+    if (contracts.isEmpty()) {
+        throw new RuntimeException("You have no owner contracts.");
+    }
+
+    return contracts.stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
         }
 
         public OwnerContractResponse create(CreateOwnerContractRequest req) {

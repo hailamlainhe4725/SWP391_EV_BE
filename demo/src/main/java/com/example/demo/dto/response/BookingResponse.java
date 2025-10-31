@@ -17,4 +17,6 @@ public class BookingResponse {
     LocalDateTime startTime;
     LocalDateTime endTime;
     LocalDateTime createdAt;
+      private boolean disputed;         // Có tranh chấp hay không
+    private Boolean disputeWinner;    // true = thắng, false = thua, null = chưa tranh chấp
 }
