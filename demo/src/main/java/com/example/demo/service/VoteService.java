@@ -48,6 +48,7 @@ public class VoteService {
                                 .createdBy(creator)
                                 .requiredRatio(ratio)
                                 .status(VoteStatus.PENDING)
+                                .amount(ratio)
                                 .build();
 
                 voteTopicRepository.save(topic);
@@ -194,9 +195,11 @@ public VoteTopicResponse calculateResult(Long topicId) {
                                 .requiredRatio(t.getRequiredRatio())
                                 .status(t.getStatus())
                                 .vehicleName(t.getVehicle().getModel()+t.getVehicle().getPlateNumber())
+                                .vehicleId(t.getVehicle().getVehicleId())
                                 .createdById(t.getCreatedBy().getId())
                                 .createdByName(t.getCreatedBy().getFullName())
                                 .createdAt(t.getCreatedAt())
+                                .amount(t.getAmount())
                                 .build();
         }
 }

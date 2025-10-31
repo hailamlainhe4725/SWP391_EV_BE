@@ -15,6 +15,8 @@ import com.example.demo.enums.OwnershipStatus;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.*;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;

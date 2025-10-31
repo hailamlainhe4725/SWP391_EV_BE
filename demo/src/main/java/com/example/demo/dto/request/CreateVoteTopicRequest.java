@@ -9,4 +9,5 @@ public class CreateVoteTopicRequest {
     private String title;
     private String description;
     private DecisionType decisionType; // MINOR, MEDIUM, MAJOR
+    private double amount;
 }

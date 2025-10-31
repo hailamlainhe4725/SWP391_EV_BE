@@ -15,7 +15,8 @@ public class VoteTopicResponse {
     DecisionType decisionType;
     Double requiredRatio;
     VoteStatus status;
-
+    double amount;
+    Long vehicleId;
 
 
     String vehicleName;

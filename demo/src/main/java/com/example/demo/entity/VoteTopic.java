@@ -59,4 +59,6 @@ public class VoteTopic {
     LocalDateTime createdAt = LocalDateTime.now();
     @Column(name = "deleted")
     boolean deleted = false;
+    
+    double amount;
 }
