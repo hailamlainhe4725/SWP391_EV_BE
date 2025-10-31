@@ -142,7 +142,7 @@ public InvoiceResponse createAutoInvoiceInNewTransaction(Long userId, Long vehic
 
     double total = 0;
     // ✅ Fixed Fees
-    List<FixedFee> fixedFees = fixedFeeRepository.findByVehicleAndDeletedFalseAndCreatedAtBetween(vehicle, startOfMonth, endOfMonth);
+    List<FixedFee> fixedFees = fixedFeeRepository.findByVehicle(vehicle);
 
     for (FixedFee ff : fixedFees) {
            
