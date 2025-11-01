@@ -38,12 +38,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
         SUM(
             DATEDIFF(
                 LEAST(
-                   
                     b.end_time,
                     LAST_DAY(CURDATE())
                 ),
                 GREATEST(
-                   
                     b.start_time,
                     DATE_FORMAT(CURDATE(), '%Y-%m-01')
                 )
@@ -52,13 +50,16 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     FROM booking b
     WHERE b.user_id = :userId
       AND b.vehicle_id = :vehicleId
-      AND b.booking_status IN ('Confirmed', 'Completed')
       AND b.deleted = 0
-      
       AND b.end_time >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
       AND b.start_time <= LAST_DAY(CURDATE())
+      AND (
+            b.booking_status IN ('Confirmed', 'Completed')
+            OR (b.booking_status = 'Cancelled' AND b.disputed = 1 AND b.dispute_winner = 1)
+          )
 """, nativeQuery = true)
 Double getUsedDaysThisMonth(Long userId, Long vehicleId);
+
 
 
 

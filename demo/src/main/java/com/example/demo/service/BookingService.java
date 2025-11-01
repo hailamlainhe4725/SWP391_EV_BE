@@ -97,6 +97,8 @@ public class BookingService {
                 // ✅ Thêm cờ tranh chấp
                 .disputed(false)
                 .disputeWinner(null)
+                .cancelledAt(null)      // chưa hủy
+                .blockSlot(false)       // chưa chiếm chỗ
                 .build();
 
         // --- 7️⃣ Duyệt từng ngày trong chuỗi ---
@@ -233,17 +235,26 @@ public class BookingService {
 
         // ====================== CANCEL BOOKING ======================
         public void cancelBooking(Long bookingId) {
-                Booking booking = bookingRepository.findById(bookingId)
-                                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
-                if (booking.getBookingStatus() == BookingStatus.Confirmed
-                                || booking.getBookingStatus() == BookingStatus.Pending) {
-                        booking.setBookingStatus(BookingStatus.Cancelled);
-                        bookingRepository.save(booking);
-                } else {
-                        throw new RuntimeException("Booking cannot be cancelled in its current state");
+        if (booking.getBookingStatus() == BookingStatus.Confirmed
+                || booking.getBookingStatus() == BookingStatus.Pending) {
+
+                booking.setBookingStatus(BookingStatus.Cancelled);
+                booking.setCancelledAt(LocalDateTime.now());
+
+                // ✅ Nếu booking từng là người thắng tranh chấp, vẫn giữ quyền "chiếm chỗ"
+                if (booking.isDisputed() && Boolean.TRUE.equals(booking.getDisputeWinner())) {
+                booking.setBlockSlot(true); // flag mới để ghi nhận ngày đó đã được chiếm
                 }
+
+                bookingRepository.save(booking);
+        } else {
+                throw new RuntimeException("Booking cannot be cancelled in its current state");
         }
+        }
+
 
         // ====================== SOFT DELETE ======================
         public void softDeleteBooking(Long bookingId) {

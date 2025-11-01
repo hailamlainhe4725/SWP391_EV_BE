@@ -53,5 +53,8 @@ public class Booking {
     @Column
     private Boolean disputeWinner; // true = thắng, false = thua, null = chưa tranh chấp
 
+        private LocalDateTime cancelledAt;  // thời điểm user hoặc hệ thống cancel
+    private boolean blockSlot;          // giữ chỗ, vẫn tính quota dù cancel
+
 
 }
