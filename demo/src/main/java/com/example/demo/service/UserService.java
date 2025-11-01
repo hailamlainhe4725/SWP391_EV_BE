@@ -8,6 +8,7 @@ import com.example.demo.dto.response.AuthResponse;
 import com.example.demo.dto.response.UserResponse;
 import com.example.demo.entity.User;
 import com.example.demo.enums.UserRole;
+import com.example.demo.enums.VerifyStatus;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.security.CustomUserDetailsService;
@@ -145,11 +146,11 @@ private JwtUtils jwtUtils;
 
     if (approved) {
         user.setVerified(true);
-        user.setVerifyStatus("APPROVED");
+        user.setVerifyStatus(VerifyStatus.APPROVED);
         user.setVerifyNote(note != null ? note : "Documents verified successfully");
     } else {
         user.setVerified(false);
-        user.setVerifyStatus("REJECTED");
+        user.setVerifyStatus(VerifyStatus.REJECTED);
         user.setVerifyNote(note != null ? note : "Documents rejected");
     }
 
@@ -179,11 +180,20 @@ public AuthResponse authenticate(AuthRequest req) {
 
     // ===== Mapper =====
     private UserResponse mapToResponse(User user) {
-        return new UserResponse(
-                user.getId(),
-                user.getFullName(),
-                user.getEmail(),
-                user.getPhone(),
-                user.getRole().name());
-    }
+    return UserResponse.builder()
+            .id(user.getId())
+            .fullName(user.getFullName())
+            .email(user.getEmail())
+            .phone(user.getPhone())
+            .role(user.getRole().name())
+            .cccd(user.getCccd())
+            .gplx(user.getGplx())
+            .cccdImagePath(user.getCccdImagePath())
+            .gplxImagePath(user.getGplxImagePath())
+            .verified(user.getVerified())
+            .verifyStatus(user.getVerifyStatus())
+            .verifyNote(user.getVerifyNote())
+            .build();
+}
+
 }
