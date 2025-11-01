@@ -143,7 +143,7 @@ public class StaffCheckingService {
         Booking booking = sc.getBooking();
 
         // Upload chữ ký user (nếu có)
-        String userSignatureUrl = uploadSignatureFile(req.getStaffSignature(), "user");
+        String userSignatureUrl = uploadSignatureFile(req.getUserSignature(), "user");
 
         if (req.isApproved()) {
             sc.setStatus(CheckingStatus.CONFIRMED);

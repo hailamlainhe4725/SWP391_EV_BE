@@ -8,6 +8,6 @@ import lombok.Data;
 public class StaffCheckingConfirmRequest {
     private boolean approved;
     private String userComment;
-    private MultipartFile staffSignature;
+    private MultipartFile userSignature;
 
 }
