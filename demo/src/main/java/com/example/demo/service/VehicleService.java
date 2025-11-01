@@ -8,7 +8,11 @@ import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,7 +41,8 @@ public class VehicleService {
         return mapToResponse(vehicle);
     }
 
-    public VehicleResponse create(CreateVehicleRequest req) {
+        public VehicleResponse create(CreateVehicleRequest req) {
+    try {
         Vehicle v = Vehicle.builder()
                 .brand(req.getBrand())
                 .model(req.getModel())
@@ -47,16 +52,34 @@ public class VehicleService {
                 .batteryCapacityKwh(req.getBatteryCapacityKwh())
                 .seat(req.getSeat())
                 .price(req.getPrice())
-                .feeChargingPer1PercentUsed(req.getBatteryCapacityKwh()*2500*0.01)
+                .feeChargingPer1PercentUsed(req.getBatteryCapacityKwh() * 2500 * 0.01)
                 .feeOverKm(3000.0)
-                .operationPerMonthPerShare(req.getPrice()*0.01*0.1)
+                .operationPerMonthPerShare(req.getPrice() * 0.01 * 0.1)
                 .description(req.getDescription())
-                .imageUrl(req.getImageUrl())
                 .status(req.getStatus())
                 .build();
+
+        // --- Xử lý ảnh upload ---
+        MultipartFile imageFile = req.getImageFile();
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String uploadDir = "uploads/vehicles/";
+            Files.createDirectories(Paths.get(uploadDir));
+
+            String fileName = "vehicle_" + System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
+            Path filePath = Paths.get(uploadDir + fileName);
+            imageFile.transferTo(filePath);
+
+            v.setImageUrl(filePath.toString());
+        }
+
         vehicleRepository.save(v);
         return mapToResponse(v);
+    } catch (Exception e) {
+        throw new RuntimeException("Error uploading image: " + e.getMessage());
     }
+}
+
+
 
     public VehicleResponse update(Long id, UpdateVehicleRequest req) {
         Vehicle v = vehicleRepository.findById(id)

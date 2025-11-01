@@ -35,8 +35,8 @@ public class VehicleController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/createVehicle")
-    public ResponseEntity<VehicleResponse> create(@Valid @RequestBody CreateVehicleRequest req) {
+    @PostMapping(value = "/createVehicle",consumes = "multipart/form-data")
+    public ResponseEntity<VehicleResponse> create(@Valid @ModelAttribute CreateVehicleRequest req) {
         return ResponseEntity.ok(vehicleService.create(req));
     }
 

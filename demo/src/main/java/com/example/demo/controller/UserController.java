@@ -61,4 +61,21 @@ public class UserController {
         userService.softDelete(user_id);
         return ResponseEntity.noContent().build();
     }
+    @PreAuthorize("hasAnyRole('USER','STAFF', 'ADMIN')")
+@PostMapping(value = "/{id}/upload-documents", consumes = "multipart/form-data")
+public ResponseEntity<UserResponse> uploadDocuments(
+        @PathVariable Long id,
+        @ModelAttribute UpdateUserDocumentRequest req) {
+    return ResponseEntity.ok(userService.uploadUserDocuments(id, req));
+}
+
+@PreAuthorize("hasRole('ADMIN')")
+@PostMapping("/{userId}/verify")
+public ResponseEntity<UserResponse> verifyUser(
+        @PathVariable Long userId,
+        @RequestParam boolean approved,
+        @RequestParam(required = false) String note) {
+    return ResponseEntity.ok(userService.verifyUserDocuments(userId, approved, note));
+}
+
 }

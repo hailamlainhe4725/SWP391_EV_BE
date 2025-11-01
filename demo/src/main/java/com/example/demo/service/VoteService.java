@@ -139,16 +139,17 @@ public VoteTopicResponse calculateResult(Long topicId) {
     double totalWeight = 0.0;
     double agreeWeight = 0.0;
     Ownership ownership;
+    List<Ownership> list = ownershipRepository.findByVehicle_VehicleId(topic.getVehicle().getVehicleId());
+    
+    for(Ownership o : list){
+        totalWeight += o.getTotalSharePercentage()/100;
+    }
     for (Vote v : votes) {
         ownership = ownershipRepository.findByUser_IdAndVehicle_VehicleId(v.getUser().getId(), v.getVehicle().getVehicleId())
         .orElse(null);
-        
-
-        double weight = ownership.getTotalSharePercentage() / 100.0;
-        totalWeight += weight;
 
         if (Boolean.TRUE.equals(v.getChoice())) {
-            agreeWeight += weight;
+            agreeWeight += ownership.getTotalSharePercentage()/100;
         }
     }
 
@@ -202,4 +203,4 @@ public VoteTopicResponse calculateResult(Long topicId) {
                                 .amount(t.getAmount())
                                 .build();
         }
-}
+} 

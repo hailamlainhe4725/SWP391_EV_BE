@@ -29,10 +29,10 @@ public class OwnerContractService {
                                 .collect(Collectors.toList());
         }
 
-        public List<OwnerContractResponse> getContractsByUser(Authentication authentication) {
+        public List<OwnerContractResponse> getContractsByUser(Authentication authentication)  {
     User user = userRepository.findByEmail(authentication.getName())
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
+                if(!user.getVerified()) throw new RuntimeException("Account is not verify");
     List<OwnerContract> contracts = ownerContractRepository.findByUser_Id(user.getId());
 
     if (contracts.isEmpty()) {

@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.request.CreateUserRequest;
+import com.example.demo.dto.request.UpdateUserDocumentRequest;
 import com.example.demo.dto.request.UpdateUserRequest;
 import com.example.demo.dto.request.AuthRequest;
 import com.example.demo.dto.response.AuthResponse;
@@ -42,6 +43,7 @@ private JwtUtils jwtUtils;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private static final String USER_UPLOAD_DIR = "uploads/users/";
 
     // ===== Get all =====
     public List<UserResponse> getAll() {
@@ -101,6 +103,59 @@ private JwtUtils jwtUtils;
         userRepository.save(user);
         return mapToResponse(user);
     }
+    public UserResponse uploadUserDocuments(Long userId, UpdateUserDocumentRequest req) {
+        try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+            Files.createDirectories(Paths.get(USER_UPLOAD_DIR));
+
+            // --- cập nhật số CCCD, GPLX ---
+            if (req.getCccd() != null) user.setCccd(req.getCccd());
+            if (req.getGplx() != null) user.setGplx(req.getGplx());
+
+            // --- xử lý file ảnh CCCD ---
+            MultipartFile cccdFile = req.getCccdFile();
+            if (cccdFile != null && !cccdFile.isEmpty()) {
+                String cccdFileName = "cccd_" + userId + "_" + cccdFile.getOriginalFilename();
+                Path cccdPath = Paths.get(USER_UPLOAD_DIR + cccdFileName);
+                cccdFile.transferTo(cccdPath);
+                user.setCccdImagePath(cccdPath.toString());
+            }
+
+            // --- xử lý file ảnh GPLX ---
+            MultipartFile gplxFile = req.getGplxFile();
+            if (gplxFile != null && !gplxFile.isEmpty()) {
+                String gplxFileName = "gplx_" + userId + "_" + gplxFile.getOriginalFilename();
+                Path gplxPath = Paths.get(USER_UPLOAD_DIR + gplxFileName);
+                gplxFile.transferTo(gplxPath);
+                user.setGplxImagePath(gplxPath.toString());
+            }
+
+            userRepository.save(user);
+            return mapToResponse(user);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Error saving user documents: " + e.getMessage());
+        }
+    }
+    public UserResponse verifyUserDocuments(Long userId, boolean approved, String note) {
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    if (approved) {
+        user.setVerified(true);
+        user.setVerifyStatus("APPROVED");
+        user.setVerifyNote(note != null ? note : "Documents verified successfully");
+    } else {
+        user.setVerified(false);
+        user.setVerifyStatus("REJECTED");
+        user.setVerifyNote(note != null ? note : "Documents rejected");
+    }
+
+    userRepository.save(user);
+    return mapToResponse(user);
+}
 
     // ===== Soft delete =====
     public void softDelete(Long id) {

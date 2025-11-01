@@ -3,6 +3,7 @@ package com.example.demo.dto.request;
 import com.example.demo.enums.VehicleStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.web.multipart.MultipartFile;
 
 @Getter
 @Setter
@@ -23,6 +24,8 @@ public class CreateVehicleRequest {
     Double feeOverKm;
     Double operationPerMonthPerShare;
     String description;
-    String imageUrl;
     VehicleStatus status;
+
+    // ✅ thêm file ảnh
+    MultipartFile imageFile;
 }

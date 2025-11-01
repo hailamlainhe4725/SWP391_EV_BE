@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import com.example.demo.enums.UserRole;
+import com.example.demo.enums.VerifyStatus;
 
 @Entity
 @Table(name = "`user`")
@@ -47,5 +48,25 @@ public class User {
 
     @Column(name = "gplx")
     String gplx;
+
+
+
+    //  Ảnh giấy tờ
+    @Column(name = "cccd_image")
+    String cccdImagePath;
+
+    @Column(name = "gplx_image")
+    String gplxImagePath;
+
+    @Column(name = "is_verified")
+Boolean verified = false;
+
+@Column(name = "verify_status")
+@Enumerated(EnumType.STRING)
+VerifyStatus verifyStatus = VerifyStatus.PENDING;
+
+
+@Column(name = "verify_note")
+String verifyNote; // Ghi chú từ admin nếu bị từ chối
 
 }

@@ -166,7 +166,8 @@ public class StaffCheckingService {
 
                 Double distanceTraveled = sc.getOdometer() - checkout.getOdometer();
                 Double batteryUsed = checkout.getBatteryPercent() - sc.getBatteryPercent();
-
+                sc.setBatteryUsedPercent(batteryUsed);
+                sc.setDistanceTraveled(distanceTraveled);
                 Ownership ownership = ownershipRepository
                         .findByUser_IdAndVehicle_VehicleId(sc.getUser().getId(), sc.getVehicle().getVehicleId())
                         .orElseThrow(() -> new ResourceNotFoundException("Ownership not found"));
