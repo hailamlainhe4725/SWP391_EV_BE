@@ -81,14 +81,6 @@ public ResponseEntity<UserResponse> verifyUser(
     return ResponseEntity.ok(userService.verifyUserDocuments(userId, approved, note));
 }
 
-// lay ra danh sach user chua verify
-@PreAuthorize("hasRole('ADMIN')")
-@GetMapping("/pending-verification")
-public ResponseEntity<List<UserResponse>> getPendingUsers() {
-    List<UserResponse> users = userService.getAll().stream()
-            .filter(u -> u.getVerifyStatus() == VerifyStatus.PENDING)
-            .collect(Collectors.toList());
-    return ResponseEntity.ok(users);
-}
+
 
 }

@@ -32,8 +32,8 @@ public class Contract {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     User user;
-
-        @JoinColumn(name = "user_id", nullable = false)
+         @ManyToOne
+        @JoinColumn(name = "admin_id", nullable = false)
     User admin;
 
     LocalDate startDate;
