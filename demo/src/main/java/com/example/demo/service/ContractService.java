@@ -162,20 +162,36 @@ public class ContractService {
         }
 
 
-        public List<ContractResponse> getContractsByUser(Authentication authentication) {
+ public List<ContractResponse> getContractsByUser(Authentication authentication) {
+    // 1️⃣ Lấy thông tin user hiện tại
     User user = userRepository.findByEmail(authentication.getName())
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-    List<Contract> contracts = contractRepository.findByUser_Id(user.getId());
-
-    if (contracts.isEmpty()) {
-        throw new RuntimeException("You have no contracts.");
+    if (!user.getVerified()) {
+        throw new RuntimeException("Account is not verified");
     }
 
+    // 2️⃣ Lấy danh sách owner contracts mà user này tham gia
+    List<OwnerContract> ownerContracts = ownerContractRepository.findByUser_Id(user.getId());
+    if (ownerContracts.isEmpty()) {
+        throw new RuntimeException("You have no owner contracts.");
+    }
+
+    // 3️⃣ Lấy danh sách contractId duy nhất (distinct)
+    List<Long> uniqueContractIds = ownerContracts.stream()
+            .map(oc -> oc.getContract().getContractId()) // lấy contractId
+            .distinct() // loại bỏ trùng
+            .collect(Collectors.toList());
+
+    // 4️⃣ Từ danh sách contractId, lấy ra các Contract tương ứng
+    List<Contract> contracts = contractRepository.findAllById(uniqueContractIds);
+
+    // 5️⃣ Chuyển thành response DTO
     return contracts.stream()
-            .map(this::mapToResponse)
+            .map(this::mapToResponse) // dùng mapToResponse của bạn
             .collect(Collectors.toList());
 }
+
 
 
     public ContractResponse updateStatus(Long id, ContractStatus status) {
