@@ -78,6 +78,7 @@ private JwtUtils jwtUtils;
         user.setPhone(req.getPhone());
         user.setPassword(req.getPassword());
         user.setVerifyStatus(VerifyStatus.PENDING);
+        user.setVerified(false);
 
         // Enum mapping
         String roleStr = (req.getRole() == null || req.getRole().isEmpty()) ? "USER" : req.getRole().toUpperCase();

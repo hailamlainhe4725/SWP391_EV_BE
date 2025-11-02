@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -94,7 +95,21 @@ public class VehicleService {
         if (req.getFeeChargingPer1PercentUsed() != null) v.setFeeChargingPer1PercentUsed(req.getFeeChargingPer1PercentUsed());
         if (req.getFeeOverKm() != null) v.setFeeOverKm(req.getFeeOverKm());
         if (req.getOperationPerMonthPerShare() != null) v.setOperationPerMonthPerShare(req.getOperationPerMonthPerShare());
+        MultipartFile imageFile = req.getImageFile();
+        try{
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String uploadDir = "uploads/vehicles/";
+            Files.createDirectories(Paths.get(uploadDir));
 
+            String fileName = "vehicle_" + System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
+            Path filePath = Paths.get(uploadDir + fileName);
+            imageFile.transferTo(filePath);
+
+            v.setImageUrl(filePath.toString());
+        }
+    }catch(Exception e){
+        System.out.println("loi o 111 vehicleService");
+    }
         vehicleRepository.save(v);
         return mapToResponse(v);
     }

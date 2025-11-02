@@ -12,6 +12,7 @@ import com.example.demo.enums.ContractStatus;
 import com.example.demo.enums.FixFeeType;
 import com.example.demo.enums.OwnerContractStatus;
 import com.example.demo.enums.OwnershipStatus;
+import com.example.demo.enums.VerifyStatus;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -58,7 +59,7 @@ public class ContractService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
                 String userSignatureUrl = checkingService.uploadSignatureFile(req.getUserSignature(), "user");
                 String adminSignatureUrl = checkingService.uploadSignatureFile(req.getAdminSignature(), "admin");
-
+        if(user.getVerifyStatus() != VerifyStatus.APPROVED) throw new RuntimeException("verify must approved");
         // ===== 1. Tạo Contract =====
         Contract contract = Contract.builder()
                 .user(user)

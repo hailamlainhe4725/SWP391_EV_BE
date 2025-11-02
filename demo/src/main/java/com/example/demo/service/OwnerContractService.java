@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.management.RuntimeErrorException;
+
 @Service
 @RequiredArgsConstructor
 public class OwnerContractService {
@@ -55,7 +57,7 @@ public class OwnerContractService {
         if (contract.getStatus() != ContractStatus.APPROVED) {
                 throw new IllegalStateException("Contract must be approved before adding owner contracts");
         }
-
+        if(user.getVerifyStatus()!= VerifyStatus.APPROVED) throw new RuntimeException("verify approve first");
         double totalShareForVehicle = ownershipRepository.findByVehicle_VehicleId(contract.getVehicle().getVehicleId())
         .stream()
         .mapToDouble(Ownership::getTotalSharePercentage)
