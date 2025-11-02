@@ -91,6 +91,13 @@ private JwtUtils jwtUtils;
         return mapToResponse(user);
     }
 
+public UserResponse phongStaff(String email) {
+       User user = userRepository.findByEmail(email)
+       .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+       user.setRole(UserRole.STAFF);
+        userRepository.save(user);
+        return mapToResponse(user);
+    }
 
 
 
@@ -135,7 +142,8 @@ private JwtUtils jwtUtils;
                 gplxFile.transferTo(gplxPath);
                 user.setGplxImagePath(gplxPath.toString());
             }
-
+            user.setFullName(req.getFullName());
+            user.setPhone(req.getPhone());
             userRepository.save(user);
             return mapToResponse(user);
 

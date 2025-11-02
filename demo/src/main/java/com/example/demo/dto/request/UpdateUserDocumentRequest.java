@@ -15,4 +15,6 @@ public class UpdateUserDocumentRequest {
     String gplx;           // số GPLX
     MultipartFile cccdFile; // ảnh CCCD
     MultipartFile gplxFile; // ảnh GPLX
+        private String fullName;
+    private String phone;
 }

@@ -2,6 +2,7 @@ package com.example.demo.controller;
 import com.example.demo.dto.request.*;
 import com.example.demo.dto.response.*;
 import com.example.demo.enums.VerifyStatus;
+import com.example.demo.repository.UserRepository;
 import com.example.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -41,22 +42,19 @@ public class UserController {
         return ResponseEntity.ok(res);
     }
 
-    @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    @PutMapping("/update")
-    public ResponseEntity<UserResponse> update(
-            @Valid @RequestBody UpdateUserRequest req,
-            Authentication auth) {
-        // optional: allow self or staff
-        UserResponse updated = userService.update(auth.getName(), req);
-        return ResponseEntity.ok(updated);
-    }
-
+    
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
     @GetMapping("/viewAllUser")
     public ResponseEntity<List<UserResponse>> getAll() {
         return ResponseEntity.ok(userService.getAll());
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/upLevelToStaff")
+    public ResponseEntity<UserResponse> levelUpUser(@PathVariable String email) {
+        return ResponseEntity.ok(userService.phongStaff(email));
+    
+    }
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/delete/{user_id}")
     public ResponseEntity<Void> delete(@PathVariable Long user_id) {
