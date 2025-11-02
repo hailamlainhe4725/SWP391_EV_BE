@@ -50,7 +50,7 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/upLevelToStaff")
+    @PostMapping("/{email}/upLevelToStaff")
     public ResponseEntity<UserResponse> levelUpUser(@PathVariable String email) {
         return ResponseEntity.ok(userService.phongStaff(email));
     
