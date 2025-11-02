@@ -57,7 +57,7 @@ public class ContractService {
         User admin = userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
                 String userSignatureUrl = checkingService.uploadSignatureFile(req.getUserSignature(), "user");
-                String adminSignatureUrl = checkingService.uploadSignatureFile(req.getUserSignature(), "admin");
+                String adminSignatureUrl = checkingService.uploadSignatureFile(req.getAdminSignature(), "admin");
 
         // ===== 1. Tạo Contract =====
         Contract contract = Contract.builder()

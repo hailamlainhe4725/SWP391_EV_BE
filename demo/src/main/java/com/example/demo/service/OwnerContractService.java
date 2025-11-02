@@ -66,7 +66,7 @@ public class OwnerContractService {
         }
 
         String userSignatureUrl = checkingService.uploadSignatureFile(req.getUserSignature(), "user");
-                String adminSignatureUrl = checkingService.uploadSignatureFile(req.getUserSignature(), "admin");
+                String adminSignatureUrl = checkingService.uploadSignatureFile(req.getAdminSignature(), "admin");
 
         OwnerContract oc = OwnerContract.builder()
                 .contract(contract)

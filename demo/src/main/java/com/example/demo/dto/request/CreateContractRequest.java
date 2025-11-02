@@ -15,6 +15,6 @@ public class CreateContractRequest {
     private LocalDate startDate;
     private LocalDate endDate;
     private ContractStatus status;
-    MultipartFile staffSignature;
+    MultipartFile adminSignature;
     MultipartFile userSignature;
 }
