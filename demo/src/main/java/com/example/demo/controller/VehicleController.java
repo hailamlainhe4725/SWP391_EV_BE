@@ -43,7 +43,7 @@ public ResponseEntity<VehicleResponse> create(@Valid @ModelAttribute CreateVehic
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(value = "/update/{id}", consumes = "multipart/form-data")
-    public ResponseEntity<VehicleResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateVehicleRequest req) {
+    public ResponseEntity<VehicleResponse> update(@PathVariable Long id, @Valid @ModelAttribute UpdateVehicleRequest req) {
         return ResponseEntity.ok(vehicleService.update(id, req));
     }
 
