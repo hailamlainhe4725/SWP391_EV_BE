@@ -243,7 +243,7 @@ public class StaffCheckingService {
     }
 
     // === Upload chữ ký (dùng chung)
-private String uploadSignatureFile(MultipartFile file, String prefix) {
+public String uploadSignatureFile(MultipartFile file, String prefix) {
     if (file == null || file.isEmpty()) {
         System.out.println("⚠️ No file uploaded for " + prefix);
         return null;

@@ -22,6 +22,7 @@ public class OwnerContractService {
         private final ContractRepository contractRepository;
         private final UserRepository userRepository;
         private final OwnershipRepository ownershipRepository;
+        private final StaffCheckingService checkingService;
 
         public List<OwnerContractResponse> getAll() {
                 return ownerContractRepository.findAll().stream()
@@ -44,12 +45,13 @@ public class OwnerContractService {
             .collect(Collectors.toList());
         }
 
-        public OwnerContractResponse create(CreateOwnerContractRequest req) {
+        public OwnerContractResponse create(Authentication authentication,CreateOwnerContractRequest req) {
         Contract contract = contractRepository.findById(req.getContractId())
                 .orElseThrow(() -> new RuntimeException("Contract not found"));
         User user = userRepository.findById(req.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
+        User admin = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
         if (contract.getStatus() != ContractStatus.APPROVED) {
                 throw new IllegalStateException("Contract must be approved before adding owner contracts");
         }
@@ -63,10 +65,15 @@ public class OwnerContractService {
         throw new IllegalArgumentException("Total vehicle ownership exceeds 100%");
         }
 
+        String userSignatureUrl = checkingService.uploadSignatureFile(req.getUserSignature(), "user");
+                String adminSignatureUrl = checkingService.uploadSignatureFile(req.getUserSignature(), "admin");
 
         OwnerContract oc = OwnerContract.builder()
                 .contract(contract)
                 .user(user)
+                .admin(admin)
+                .adminSignatureUrl(adminSignatureUrl)
+                .userSignatureUrl(userSignatureUrl)
                 .sharePercentage(req.getSharePercentage())
                 .status(OwnerContractStatus.ACTIVE)
                 .build();
@@ -110,7 +117,10 @@ public class OwnerContractService {
         private OwnerContractResponse mapToResponse(OwnerContract oc) {
                 return OwnerContractResponse.builder()
                                 .ownerContractId(oc.getOwnerContractId())
-                                .userName(oc.getUser().getFullName())
+                                .admin(oc.getAdmin())
+                                .user(oc.getUser())
+                                .adminSignature(oc.getAdminSignatureUrl())
+                                .userSignature(oc.getUserSignatureUrl())
                                 .sharePercentage(oc.getSharePercentage())
                                 .contractStatus(oc.getContract().getStatus().name())
                                 .createdAt(oc.getCreatedAt())

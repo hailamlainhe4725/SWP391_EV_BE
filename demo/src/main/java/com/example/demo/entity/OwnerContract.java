@@ -27,7 +27,8 @@ public class OwnerContract {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     User user; // người mua cổ phần (co-owner)
-
+        @JoinColumn(name = "user_id", nullable = false)
+    User admin; // người mua cổ phần (co-owner)
     // % cổ phần mua (VD: 20%)
     Double sharePercentage;
 
@@ -38,4 +39,7 @@ public class OwnerContract {
     @Builder.Default
     @Column(nullable = false)
     Boolean deleted = false;
+
+         String adminSignatureUrl;
+     String userSignatureUrl;
 }

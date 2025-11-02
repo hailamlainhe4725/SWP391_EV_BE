@@ -20,9 +20,9 @@ public class ContractController {
     private final ContractService contractService;
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/createContract")
-    public ResponseEntity<ContractResponse> create(@RequestBody CreateContractRequest req) {
-        return ResponseEntity.ok(contractService.create(req));
+    @PostMapping(value = "/createContract",consumes = "multipart/form-data")
+    public ResponseEntity<ContractResponse> create(Authentication authentication,@ModelAttribute CreateContractRequest req) {
+        return ResponseEntity.ok(contractService.create(authentication,req));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

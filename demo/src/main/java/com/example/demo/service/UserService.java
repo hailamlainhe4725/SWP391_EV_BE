@@ -32,6 +32,8 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.management.RuntimeErrorException;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -75,6 +77,7 @@ private JwtUtils jwtUtils;
         user.setEmail(req.getEmail());
         user.setPhone(req.getPhone());
         user.setPassword(req.getPassword());
+        user.setVerifyStatus(VerifyStatus.PENDING);
 
         // Enum mapping
         String roleStr = (req.getRole() == null || req.getRole().isEmpty()) ? "USER" : req.getRole().toUpperCase();
@@ -108,7 +111,7 @@ private JwtUtils jwtUtils;
         try {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
+            if(user.getVerified()) throw new RuntimeException("CCCD AND GPLX is verified");
             Files.createDirectories(Paths.get(USER_UPLOAD_DIR));
 
             // --- cập nhật số CCCD, GPLX ---

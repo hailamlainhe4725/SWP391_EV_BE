@@ -30,7 +30,7 @@ public class ContractService {
     private final OwnershipRepository ownershipRepository;
 
     private final OwnerContractRepository ownerContractRepository;
-
+        private final StaffCheckingService checkingService;
     private final ContractRepository contractRepository;
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
@@ -49,11 +49,15 @@ public class ContractService {
                 .orElseThrow(() -> new RuntimeException("Contract not found"));
     }
 
-        public ContractResponse create(CreateContractRequest req) {
+        public ContractResponse create(Authentication authentication,CreateContractRequest req) {
         User user = userRepository.findById(req.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
                 .orElseThrow(() -> new RuntimeException("Vehicle not found"));
+        User admin = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+                String userSignatureUrl = checkingService.uploadSignatureFile(req.getUserSignature(), "user");
+                String adminSignatureUrl = checkingService.uploadSignatureFile(req.getUserSignature(), "admin");
 
         // ===== 1. Tạo Contract =====
         Contract contract = Contract.builder()
@@ -63,6 +67,9 @@ public class ContractService {
                 .startDate(req.getStartDate())
                 .endDate(req.getEndDate())
                 .status(req.getStatus() != null ? req.getStatus() : ContractStatus.PENDING)
+                .admin(admin)
+                .userSignatureUrl(userSignatureUrl)
+                .adminSignatureUrl(adminSignatureUrl)
                 .build();
 
         contractRepository.save(contract);
@@ -189,8 +196,11 @@ public class ContractService {
     private ContractResponse mapToResponse(Contract c) {
         return ContractResponse.builder()
                 .contractId(c.getContractId())
-                .ownerName(c.getUser().getFullName())
-                .vehicleName(c.getVehicle().getBrand() + " " + c.getVehicle().getModel())
+                .user(c.getUser())
+                .vehicle(c.getVehicle())
+                .admin(c.getAdmin())
+                .adminSignature(c.getAdminSignatureUrl())
+                .userSignature(c.getUserSignatureUrl())
                 .salePercentage(c.getSalePercentage())
                 .status(c.getStatus().name())
                 .startDate(c.getStartDate())

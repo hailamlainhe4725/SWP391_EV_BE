@@ -34,7 +34,7 @@ public ResponseEntity<String> handleWebhook(@RequestBody(required = false) Strin
     System.out.println("📩 Received webhook request");
 
     // ✅ Bước 1: PayOS gửi test webhook (body rỗng)
-    if (requestBody == null || requestBody.isEmpty()) {
+    if (requestBody == null || requestBody.isEmpty()|| requestBody.equals("{}")) {
         System.out.println("🔹 PayOS sent webhook test request");
         return ResponseEntity.ok("Webhook test OK");
     }

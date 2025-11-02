@@ -24,9 +24,9 @@ public class OwnerContractController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/createOwnerContract")
-    public ResponseEntity<OwnerContractResponse> create(@RequestBody CreateOwnerContractRequest req) {
-        return ResponseEntity.ok(ownerContractService.create(req));
+    @PostMapping(value = "/createOwnerContract",consumes = "multipart/form-data")
+    public ResponseEntity<OwnerContractResponse> create(Authentication authentication,@ModelAttribute CreateOwnerContractRequest req) {
+        return ResponseEntity.ok(ownerContractService.create(authentication,req));
     }
 
         @PreAuthorize("hasRole( 'ADMIN')")

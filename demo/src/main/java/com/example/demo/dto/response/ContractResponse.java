@@ -5,12 +5,18 @@ import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.example.demo.entity.User;
+import com.example.demo.entity.Vehicle;
+
 @Data
 @Builder
 public class ContractResponse {
     private Long contractId;
-    private String ownerName;
-    private String vehicleName;
+    private User user;
+    private Vehicle vehicle;
+    private User admin;
+    private String userSignature;
+    private String adminSignature;
     private Double salePercentage;
     private String status;
     private LocalDate startDate;

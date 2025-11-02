@@ -33,6 +33,9 @@ public class Contract {
     @JoinColumn(name = "user_id", nullable = false)
     User user;
 
+        @JoinColumn(name = "user_id", nullable = false)
+    User admin;
+
     LocalDate startDate;
     LocalDate endDate;
 
@@ -46,4 +49,6 @@ public class Contract {
     @Column(nullable = false)
     @Builder.Default
     Boolean deleted = false;
+     String adminSignatureUrl;
+ String userSignatureUrl;
 }
