@@ -34,14 +34,15 @@ public class VehicleController {
         return ResponseEntity.ok(vehicleService.getById(id));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping(value = "/createVehicle",consumes = "multipart/form-data")
-    public ResponseEntity<VehicleResponse> create(@Valid @ModelAttribute CreateVehicleRequest req) {
-        return ResponseEntity.ok(vehicleService.create(req));
-    }
+@PreAuthorize("hasRole('ADMIN')")
+@PostMapping(value = "/createVehicle", consumes = "multipart/form-data")
+public ResponseEntity<VehicleResponse> create(@Valid @ModelAttribute CreateVehicleRequest req) {
+    return ResponseEntity.ok(vehicleService.create(req));
+}
+
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/update/{id}")
+    @PutMapping(value = "/update/{id}", consumes = "multipart/form-data")
     public ResponseEntity<VehicleResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateVehicleRequest req) {
         return ResponseEntity.ok(vehicleService.update(id, req));
     }
