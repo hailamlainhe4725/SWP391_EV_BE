@@ -53,7 +53,7 @@ public class ContractService {
         public ContractResponse create(Authentication authentication,CreateContractRequest req) {
         User user = userRepository.findById(req.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-Vehicle vehicle = vehicleRepository.findByIdAndDeletedFalse(req.getVehicleId())
+Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicleId())
     .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found or deleted"));
 
         User admin = userRepository.findByEmail(authentication.getName())
@@ -102,7 +102,7 @@ Vehicle vehicle = vehicleRepository.findByIdAndDeletedFalse(req.getVehicleId())
                                 .build());
 
                 ownership.setTotalSharePercentage(
-                        ownership.getTotalSharePercentage() + req.getSalePercentage()
+                        ownership.getTotalSharePercentage() + (100.0 - req.getSalePercentage())
                 );
 
                 // Tính quyền sử dụng theo tỷ lệ cổ phần

@@ -65,7 +65,7 @@ public class StaffCheckingService {
                 .orElseThrow(() -> new RuntimeException("Staff not found with email: " + staffEmail));
 
         // 2. Lấy vehicle và booking
-Vehicle vehicle = vehicleRepository.findByIdAndDeletedFalse(req.getVehicleId())
+Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicleId())
     .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found or deleted"));
 
 

@@ -4,6 +4,7 @@ import com.example.demo.dto.request.CreateBookingRequest;
 import com.example.demo.dto.request.UpdateStatusBookingRequest;
 import com.example.demo.dto.response.BookingResponse;
 import com.example.demo.dto.response.BookingVehicleResponse;
+import com.example.demo.dto.response.DailyDisputeWindowResponse;
 import com.example.demo.entity.*;
 import com.example.demo.enums.BookingStatus;
 import com.example.demo.exception.ResourceNotFoundException;
@@ -38,7 +39,7 @@ public class BookingService {
         // --- 1️⃣ Xác thực user và ownership ---
         User user = userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Vehicle vehicle = vehicleRepository.findByIdAndDeletedFalse(req.getVehicleId())
+        Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicleId())
     .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found or deleted"));
 
 
@@ -116,7 +117,7 @@ public class BookingService {
                 }
 
                 long hoursSinceFirst = Duration.between(firstBooking.getCreatedAt(), booking.getCreatedAt()).toHours();
-                long hoursUntilUse = Duration.between(LocalDateTime.now(), date.atTime(0, 0)).toHours();
+                long hoursUntilUse = Duration.between(firstBooking.getCreatedAt(), date.atTime(0, 0)).toHours();
                 long windowHours = getWindowHoursForUse(hoursUntilUse);
 
                 if (hoursSinceFirst > windowHours) {
@@ -166,6 +167,57 @@ public class BookingService {
                 return 72; // quá xa -> không cho tranh chấp
         }
 
+
+        // ====================== VIEW DAILY DISPUTE WINDOWS ======================
+public List<DailyDisputeWindowResponse> getDisputeWindowsForMonth(Long vehicleId, int year, int month) {
+    // Lấy tất cả booking trong tháng đó
+    List<Booking> monthBookings = bookingRepository.findAll().stream()
+            .filter(b -> !b.isDeleted())
+            .filter(b -> b.getVehicle().getVehicleId().equals(vehicleId))
+            .filter(b -> b.getCreatedAt().getYear() == year && b.getCreatedAt().getMonthValue() == month)
+            .collect(Collectors.toList());
+
+    // Lặp từng ngày trong tháng (1 → 28–31)
+    int daysInMonth = YearMonth.of(year, month).lengthOfMonth();
+
+    return java.util.stream.IntStream.rangeClosed(1, daysInMonth)
+            .mapToObj(day -> {
+                LocalDate date = LocalDate.of(year, month, day);
+
+                // Tìm booking đầu tiên (theo createdAt) cho ngày đó
+                Booking firstBooking = monthBookings.stream()
+                        .filter(b -> !b.getStartTime().toLocalDate().isAfter(date)
+                                && !b.getEndTime().toLocalDate().isBefore(date))
+                        .min(Comparator.comparing(Booking::getCreatedAt))
+                        .orElse(null);
+
+                if (firstBooking == null) {
+                    // Không có booking nào trong ngày đó → bỏ qua hoặc trả null
+                    return null;
+                }
+
+                // Tính hoursUntilUse: khoảng từ firstBooking đến 0h ngày đó
+                long hoursUntilUse = Duration.between(
+                        firstBooking.getCreatedAt(),
+                        date.atTime(0, 0)
+                ).toHours();
+
+                // Lấy window giờ
+                long windowHours = getWindowHoursForUse(hoursUntilUse);
+
+                // Tính thời điểm kết thúc tranh chấp
+                LocalDateTime windowEndAt = firstBooking.getCreatedAt().plusHours(windowHours);
+
+                return DailyDisputeWindowResponse.builder()
+                        .date(date)
+                        .firstCreatedAt(firstBooking.getCreatedAt())
+                        .windowHours(windowHours)
+                        .windowEndAt(windowEndAt)
+                        .build();
+            })
+            .filter(r -> r != null)
+            .collect(Collectors.toList());
+}
 
         // ====================== GET BOOKINGS ======================
 

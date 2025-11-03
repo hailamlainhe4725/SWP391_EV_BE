@@ -17,4 +17,5 @@ public class OwnerContractResponse {
     private LocalDateTime createdAt;
         private String userSignature;
     private String adminSignature;
+    private Long contractId;
 }

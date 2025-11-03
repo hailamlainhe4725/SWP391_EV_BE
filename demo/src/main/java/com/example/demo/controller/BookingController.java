@@ -4,6 +4,7 @@ import com.example.demo.dto.request.CreateBookingRequest;
 import com.example.demo.dto.request.UpdateStatusBookingRequest;
 import com.example.demo.dto.response.BookingResponse;
 import com.example.demo.dto.response.BookingVehicleResponse;
+import com.example.demo.dto.response.DailyDisputeWindowResponse;
 import com.example.demo.service.BookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -79,6 +80,16 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.updateBookingStatus(req));
     }
 
+    //xem duoc cac ngay co tranh chap va khoang thoi gian tranh chap
+    @PreAuthorize("hasAnyRole('STAFF','USER','ADMIN')")
+    @GetMapping("/vehicles/{vehicleId}/dispute-windows")
+public ResponseEntity<List<DailyDisputeWindowResponse>> getDisputeWindows(
+        @PathVariable Long vehicleId,
+        @RequestParam int year,
+        @RequestParam int month
+) {
+    return ResponseEntity.ok(bookingService.getDisputeWindowsForMonth(vehicleId, year, month));
+}
 
     
     @PreAuthorize("hasRole('USER')")

@@ -66,7 +66,7 @@ public class OwnershipService {
         userRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-Vehicle vehicle = vehicleRepository.findByIdAndDeletedFalse(vehicleId)
+Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(vehicleId)
     .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found or deleted"));
 
         List<Ownership> ownershipList = ownershipRepository.findByVehicle_VehicleId(vehicle.getVehicleId());
@@ -131,6 +131,9 @@ Vehicle vehicle = vehicleRepository.findByIdAndDeletedFalse(vehicleId)
                 .description(v.getDescription())
                 .imageUrl(v.getImageUrl())
                 .vehicleStatus(v.getStatus())
+                .feeChargingPerKwh(v.getFeeChargingPer1PercentUsed())
+                .feeOverKm(v.getFeeOverKm())
+                .operationPerM(v.getOperationPerMonthPerShare())
                 .build();
     }
 

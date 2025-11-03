@@ -20,6 +20,7 @@ public class UpdateVehicleRequest {
     Double batteryCapacityKwh;
     Integer seat;
     Double price;
+    String plateNumber;
     Double feeChargingPer1PercentUsed;
     Double feeOverKm;
     Double operationPerMonthPerShare;

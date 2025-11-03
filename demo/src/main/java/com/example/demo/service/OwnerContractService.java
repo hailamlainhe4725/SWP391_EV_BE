@@ -126,6 +126,7 @@ public class OwnerContractService {
                                 .sharePercentage(oc.getSharePercentage())
                                 .contractStatus(oc.getContract().getStatus().name())
                                 .createdAt(oc.getCreatedAt())
+                                .contractId(oc.getContract().getContractId())
                                 .build();
         }
 }

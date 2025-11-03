@@ -29,7 +29,7 @@ public class VoteService {
 
         // ====== Tạo chủ đề biểu quyết ======
         public VoteTopicResponse createTopic(Authentication authentication,CreateVoteTopicRequest req) {
-                Vehicle vehicle = vehicleRepository.findByIdAndDeletedFalse(req.getVehicleId())
+                Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicleId())
     .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found or deleted"));
 
                 User creator = userRepository.findByEmail(authentication.getName())
@@ -196,7 +196,7 @@ public VoteTopicResponse calculateResult(Long topicId) {
                                 .decisionType(t.getDecisionType())
                                 .requiredRatio(t.getRequiredRatio())
                                 .status(t.getStatus())
-                                .vehicleName(t.getVehicle().getModel()+t.getVehicle().getPlateNumber())
+                                .vehicleName(t.getVehicle().getModel()+" "+t.getVehicle().getPlateNumber())
                                 .vehicleId(t.getVehicle().getVehicleId())
                                 .createdById(t.getCreatedBy().getId())
                                 .createdByName(t.getCreatedBy().getFullName())

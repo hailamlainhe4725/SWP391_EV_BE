@@ -38,7 +38,7 @@ public class VehicleService {
     }
 
     public VehicleResponse getById(Long id) {
-Vehicle vehicle = vehicleRepository.findByIdAndDeletedFalse(id)
+Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(id)
     .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found or deleted"));
 
         return mapToResponse(vehicle);
@@ -85,13 +85,16 @@ Vehicle vehicle = vehicleRepository.findByIdAndDeletedFalse(id)
 
 
     public VehicleResponse update(Long id, UpdateVehicleRequest req) {
-        Vehicle v = vehicleRepository.findByIdAndDeletedFalse(id)
+        Vehicle v = vehicleRepository.findByVehicleIdAndDeletedFalse(id)
     .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found or deleted"));
 
 
         if (req.getBrand() != null) v.setBrand(req.getBrand());
         if (req.getModel() != null) v.setModel(req.getModel());
         if (req.getColor() != null) v.setColor(req.getColor());
+        if (req.getSeat() != null) v.setSeat(req.getSeat());
+        if (req.getPrice() !=null) v.setPrice(req.getPrice());
+        if (req.getPlateNumber() != null) v.setPlateNumber(req.getPlateNumber());
         if (req.getYear() != null) v.setYear(req.getYear());
         if (req.getDescription() != null) v.setDescription(req.getDescription());
         if (req.getStatus() != null) v.setStatus(req.getStatus());
@@ -120,7 +123,7 @@ Vehicle vehicle = vehicleRepository.findByIdAndDeletedFalse(id)
     }
 
     public void softDelete(Long id) {
-        Vehicle v = vehicleRepository.findByIdAndDeletedFalse(id)
+        Vehicle v = vehicleRepository.findByVehicleIdAndDeletedFalse(id)
     .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found or deleted"));
 
         v.setDeleted(true);
