@@ -32,6 +32,8 @@ public class OwnerContract {
     User admin; // người mua cổ phần (co-owner)
     // % cổ phần mua (VD: 20%)
     Double sharePercentage;
+    @JoinColumn(name = "vehicleId", nullable = false)
+    Vehicle vehicle;
 
     @Enumerated(EnumType.STRING)
     OwnerContractStatus status = OwnerContractStatus.ACTIVE;

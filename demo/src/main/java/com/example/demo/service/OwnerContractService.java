@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -69,15 +70,17 @@ public class OwnerContractService {
 
         String userSignatureUrl = checkingService.uploadSignatureFile(req.getUserSignature(), "user");
                 String adminSignatureUrl = checkingService.uploadSignatureFile(req.getAdminSignature(), "admin");
-
+        Vehicle vehicle = contract.getVehicle();
         OwnerContract oc = OwnerContract.builder()
                 .contract(contract)
                 .user(user)
                 .admin(admin)
                 .adminSignatureUrl(adminSignatureUrl)
                 .userSignatureUrl(userSignatureUrl)
+                .createdAt(LocalDateTime.now())
                 .sharePercentage(req.getSharePercentage())
                 .status(OwnerContractStatus.ACTIVE)
+                .vehicle(vehicle)
                 .build();
 
         ownerContractRepository.save(oc);
@@ -121,6 +124,7 @@ public class OwnerContractService {
                                 .ownerContractId(oc.getOwnerContractId())
                                 .admin(oc.getAdmin())
                                 .user(oc.getUser())
+                                .vehicle(oc.getVehicle())
                                 .adminSignature(oc.getAdminSignatureUrl())
                                 .userSignature(oc.getUserSignatureUrl())
                                 .sharePercentage(oc.getSharePercentage())

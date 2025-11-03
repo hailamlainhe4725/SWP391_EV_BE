@@ -71,6 +71,7 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicl
                 .endDate(req.getEndDate())
                 .status(req.getStatus() != null ? req.getStatus() : ContractStatus.PENDING)
                 .admin(admin)
+                .createdAt(req.getStartDate().atStartOfDay())
                 .userSignatureUrl(userSignatureUrl)
                 .adminSignatureUrl(adminSignatureUrl)
                 .build();
@@ -85,7 +86,7 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicl
                         .admin(admin)
                         .userSignatureUrl(userSignatureUrl)
                         .adminSignatureUrl(adminSignatureUrl)
-                        .createdAt(req.getStartDate().atStartOfDay())
+                        .createdAt(LocalDateTime.now())
                         .sharePercentage(req.getSalePercentage())
                         .status(OwnerContractStatus.ACTIVE)
                         .build();
