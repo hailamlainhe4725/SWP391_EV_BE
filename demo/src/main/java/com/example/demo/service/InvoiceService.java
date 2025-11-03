@@ -116,8 +116,9 @@ public SumaInvoiceResponse createAutoInvoicesByEmail(String email) {
 public InvoiceResponse createAutoInvoiceInNewTransaction(Long userId, Long vehicleId, String note) {
     User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-    Vehicle vehicle = vehicleRepository.findById(vehicleId)
-            .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+Vehicle vehicle = vehicleRepository.findByIdAndDeletedFalse(vehicleId)
+    .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found or deleted"));
+
     Ownership ownership = ownershipRepository.findByUser_IdAndVehicle_VehicleId(user.getId(), vehicle.getVehicleId())
     .orElseThrow(() -> new ResourceNotFoundException("ownership not found"));
 

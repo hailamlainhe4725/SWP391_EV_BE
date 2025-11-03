@@ -66,8 +66,8 @@ public class OwnershipService {
         userRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        Vehicle vehicle = vehicleRepository.findById(vehicleId)
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+Vehicle vehicle = vehicleRepository.findByIdAndDeletedFalse(vehicleId)
+    .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found or deleted"));
 
         List<Ownership> ownershipList = ownershipRepository.findByVehicle_VehicleId(vehicle.getVehicleId());
         if (ownershipList.isEmpty()) {

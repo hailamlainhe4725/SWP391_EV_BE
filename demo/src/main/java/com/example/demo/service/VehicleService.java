@@ -4,6 +4,7 @@ import com.example.demo.dto.request.CreateVehicleRequest;
 import com.example.demo.dto.request.UpdateVehicleRequest;
 import com.example.demo.dto.response.VehicleResponse;
 import com.example.demo.entity.Vehicle;
+import com.example.demo.enums.VehicleStatus;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +38,9 @@ public class VehicleService {
     }
 
     public VehicleResponse getById(Long id) {
-        Vehicle vehicle = vehicleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+Vehicle vehicle = vehicleRepository.findByIdAndDeletedFalse(id)
+    .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found or deleted"));
+
         return mapToResponse(vehicle);
     }
 
@@ -83,8 +85,9 @@ public class VehicleService {
 
 
     public VehicleResponse update(Long id, UpdateVehicleRequest req) {
-        Vehicle v = vehicleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+        Vehicle v = vehicleRepository.findByIdAndDeletedFalse(id)
+    .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found or deleted"));
+
 
         if (req.getBrand() != null) v.setBrand(req.getBrand());
         if (req.getModel() != null) v.setModel(req.getModel());
@@ -110,13 +113,16 @@ public class VehicleService {
     }catch(Exception e){
         System.out.println("loi o 111 vehicleService");
     }
+        
+        if(v.getStatus() == VehicleStatus.Unavailable) v.setDeleted(true);
         vehicleRepository.save(v);
         return mapToResponse(v);
     }
 
     public void softDelete(Long id) {
-        Vehicle v = vehicleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+        Vehicle v = vehicleRepository.findByIdAndDeletedFalse(id)
+    .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found or deleted"));
+
         v.setDeleted(true);
         vehicleRepository.save(v);
     }

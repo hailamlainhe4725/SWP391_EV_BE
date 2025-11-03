@@ -29,8 +29,9 @@ public class VoteService {
 
         // ====== Tạo chủ đề biểu quyết ======
         public VoteTopicResponse createTopic(Authentication authentication,CreateVoteTopicRequest req) {
-                Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
-                                .orElseThrow(() -> new RuntimeException("Ownership not found"));
+                Vehicle vehicle = vehicleRepository.findByIdAndDeletedFalse(req.getVehicleId())
+    .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found or deleted"));
+
                 User creator = userRepository.findByEmail(authentication.getName())
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 

@@ -36,8 +36,9 @@ public class FeeService {
 
         // ================= VARIABLE FEE =================
         public FeeResponse createVariableFee(CreateVariableFeeRequest req) {
-                Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+Vehicle vehicle = vehicleRepository.findByIdAndDeletedFalse(req.getVehicleId())
+    .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found or deleted"));
+
 
                 User user = userRepository.findByEmail(req.getEmail())
                                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -66,8 +67,9 @@ public class FeeService {
 
         // ================= FIXED FEE =================
         public FeeResponse createFixedFee(CreateFixedFeeRequest req) {
-                Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+Vehicle vehicle = vehicleRepository.findByIdAndDeletedFalse(req.getVehicleId())
+    .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found or deleted"));
+
                 System.out.println(req.getType());
                 FixedFee fee = FixedFee.builder()
                                 .vehicle(vehicle)

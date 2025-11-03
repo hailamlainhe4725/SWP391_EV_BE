@@ -38,8 +38,9 @@ public class BookingService {
         // --- 1️⃣ Xác thực user và ownership ---
         User user = userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Vehicle vehicle = vehicleRepository.findById(req.getVehicleId())
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+        Vehicle vehicle = vehicleRepository.findByIdAndDeletedFalse(req.getVehicleId())
+    .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found or deleted"));
+
 
         Ownership ownership = ownershipRepository
                 .findByUser_IdAndVehicle_VehicleId(user.getId(), vehicle.getVehicleId())
