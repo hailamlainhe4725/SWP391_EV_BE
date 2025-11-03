@@ -29,7 +29,7 @@ public class OwnerContractController {
         return ResponseEntity.ok(ownerContractService.create(authentication,req));
     }
 
-        @PreAuthorize("hasRole( 'ADMIN')")
+        @PreAuthorize("hasRole( 'USER')")
     @GetMapping("/viewMyOwnerContract")
     public ResponseEntity<List<OwnerContractResponse>> getMyContracts(Authentication authentication) {
         return ResponseEntity.ok(ownerContractService.getContractsByUser(authentication));
