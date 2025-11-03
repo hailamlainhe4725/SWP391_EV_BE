@@ -84,6 +84,7 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicl
                         .contract(contract)
                         .user(user)
                         .admin(admin)
+                        .vehicle(vehicle)
                         .userSignatureUrl(userSignatureUrl)
                         .adminSignatureUrl(adminSignatureUrl)
                         .createdAt(LocalDateTime.now())
@@ -214,6 +215,7 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicl
         Contract c = contractRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Contract not found"));
         c.setStatus(ContractStatus.EXPIRED);
+        c.getVehicle().setDeleted(true);
         contractRepository.save(c);
     }
 

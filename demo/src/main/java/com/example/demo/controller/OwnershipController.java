@@ -41,7 +41,7 @@ public ResponseEntity<List<VehicleResponse>> getMyVehicles(Authentication auth) 
 }
 
     @GetMapping("/viewMygroupOwnership/{vehicle_Id}")
-@PreAuthorize("hasRole('USER')")
+@PreAuthorize("hasAnyRole('USER','ADMIN')")
 public ResponseEntity<List<OwnershipResponse>> getMyGroup(Authentication auth,@PathVariable Long vehicle_Id) {
     return ResponseEntity.ok(ownershipService.getGroupOwnership(auth,vehicle_Id));
 }

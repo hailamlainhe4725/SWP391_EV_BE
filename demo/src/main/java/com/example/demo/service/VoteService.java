@@ -49,7 +49,7 @@ public class VoteService {
                                 .createdBy(creator)
                                 .requiredRatio(ratio)
                                 .status(VoteStatus.PENDING)
-                                .amount(ratio)
+                                .amount(req.getAmount())
                                 .build();
 
                 voteTopicRepository.save(topic);
