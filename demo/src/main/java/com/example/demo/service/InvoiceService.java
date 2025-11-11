@@ -6,6 +6,7 @@ import com.example.demo.dto.response.SumaInvoiceResponse;
 import com.example.demo.entity.*;
 import com.example.demo.enums.BillingStatus;
 import com.example.demo.enums.FixFeeType;
+import com.example.demo.enums.VariableFeeType;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.*;
 
@@ -170,12 +171,12 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(vehicleId)
                 .relatedId(vf.getVariableFeeId())
                 .feeType(vf.getType().name())
                 .description(vf.getDescription())
-                .amount(vf.getAmount())
+                .amount((vf.getType().Upgrade==VariableFeeType.Upgrade)?vf.getAmount()*ownership.getTotalSharePercentage()*0.01:vf.getAmount())
                 .createdAt(LocalDateTime.now())
                 .deleted(false)
                 .build();
         detailRepository.save(detail);
-        total += vf.getAmount();
+        total += (vf.getType().Upgrade==VariableFeeType.Upgrade)?vf.getAmount()*ownership.getTotalSharePercentage()*0.01:vf.getAmount();
     }
 
     invoice.setTotalAmount(total);
@@ -217,8 +218,9 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(vehicleId)
         String monthStr = targetMonth.toString();
 
         return sumaInvoiceRepository.findByUserAndMonth(user, monthStr)
-                .map(this::mapToSumaInvoiceResponse)
-                .orElseGet(() -> createAutoInvoicesByEmail(user.getEmail()));
+            .map(this::mapToSumaInvoiceResponse)
+            .orElseThrow(() -> new ResourceNotFoundException("Invoice not found for " + monthStr));
+
     }
 
     /**

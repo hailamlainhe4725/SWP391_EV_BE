@@ -38,8 +38,8 @@ public class PaymentService {
                 .orderCode(orderCode)
                 .amount(sumaInvoice.getTotalAmount().intValue())
                 .description("Payment" + sumaInvoice.getMonth())
-                .returnUrl("https://caleb-idiomatic-milissa.ngrok-free.dev/owner/success")
-                .cancelUrl("https://your-frontend.com/payment-cancel")
+                .returnUrl("https://caleb-idiomatic-milissa.ngrok-free.dev/owner/invoice")
+                .cancelUrl("https://caleb-idiomatic-milissa.ngrok-free.dev/owner/invoice")
                 .build();
 
         CheckoutResponseData response = payOS.createPaymentLink(paymentData);

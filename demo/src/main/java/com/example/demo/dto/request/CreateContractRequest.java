@@ -15,6 +15,11 @@ public class CreateContractRequest {
     private LocalDate startDate;
     private LocalDate endDate;
     private ContractStatus status;
+    private Double insurance;
+    private Double registration;
+    private Double maintenance;
+    private Double cleaning;
+    private Double operationPerMonth;
     MultipartFile adminSignature;
     MultipartFile userSignature;
 }

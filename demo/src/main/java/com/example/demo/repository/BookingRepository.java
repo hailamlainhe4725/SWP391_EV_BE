@@ -72,22 +72,26 @@ Double getUsedDaysThisMonth(Long userId, Long vehicleId);
         SELECT b FROM Booking b
         WHERE b.vehicle.vehicleId = :vehicleId
           AND b.deleted = false
-          AND DATE(b.startTime) <= :date
-          AND DATE(b.endTime) >= :date
+          AND b.startTime <= :endOfDay
+          AND b.endTime >= :startOfDay
         ORDER BY b.createdAt ASC
-        LIMIT 1
     """)
-    Booking findEarliestBookingForDate(Long vehicleId, LocalDate date);
+    List<Booking> findEarliestBookingForDateList(    @Param("vehicleId") Long vehicleId,
+    @Param("startOfDay") LocalDateTime startOfDay,
+    @Param("endOfDay") LocalDateTime endOfDay);
 
 
     
-    @Query("""
-    SELECT b FROM Booking b
-    WHERE b.vehicle.vehicleId = :vehicleId
-      AND b.deleted = false
-      AND FUNCTION('DATE', b.startTime) = :targetDate
-""")
-List<Booking> findBookingsForDate(Long vehicleId, LocalDate targetDate);
+          @Query("""
+        SELECT b FROM Booking b
+        WHERE b.vehicle.vehicleId = :vehicleId
+          AND b.deleted = false
+          AND b.startTime <= :endOfDay
+          AND b.endTime >= :startOfDay
+    """)
+    List<Booking> findBookingsForDate(    @Param("vehicleId") Long vehicleId,
+    @Param("startOfDay") LocalDateTime startOfDay,
+    @Param("endOfDay") LocalDateTime endOfDay);
 
 List<Booking> findByVehicle_VehicleIdAndDisputedTrue(Long vehicleId);
 

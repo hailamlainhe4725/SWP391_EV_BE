@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
@@ -109,7 +110,11 @@ public class BookingService {
 
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
 
-                Booking firstBooking = bookingRepository.findEarliestBookingForDate(vehicle.getVehicleId(), date);
+                LocalDateTime startOfDay = date.atStartOfDay();
+                LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
+                List<Booking> list = bookingRepository.findEarliestBookingForDateList(vehicle.getVehicleId(), startOfDay, endOfDay);
+                Booking firstBooking = list.isEmpty() ? null : list.get(0);
+
 
                 if (firstBooking == null) {
                 // ✅ Chưa có ai đặt ngày này -> booking này là first
@@ -128,7 +133,7 @@ public class BookingService {
                 }
 
                 // ✅ Lấy tất cả booking trong ngày (bao gồm cả booking mới)
-                List<Booking> dayBookings = bookingRepository.findBookingsForDate(vehicle.getVehicleId(), date);
+                List<Booking> dayBookings = bookingRepository.findBookingsForDate(vehicle.getVehicleId(), startOfDay,endOfDay);
                 dayBookings.add(booking); // 👈 Thêm booking mới vào danh sách để tranh chấp
 
                 // ✅ Tìm booking có priority cao nhất
@@ -143,13 +148,15 @@ public class BookingService {
                 if (b.equals(topBooking)) {
                         b.setBookingStatus(BookingStatus.Pending); // staff confirm sau
                         b.setDisputeWinner(true);
+                        booking.setDisputed(true);
                 } else {
                         b.setBookingStatus(BookingStatus.Cancelled);
                         b.setDisputeWinner(false);
+                        b.setDisputed(true);
                 }
-
                 bookingRepository.save(b);
                 }
+                if (!booking.equals(topBooking)) return mapToResponse(topBooking);
         }
 
         // --- 8️⃣ Lưu booking mới ---

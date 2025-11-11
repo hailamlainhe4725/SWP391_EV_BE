@@ -51,4 +51,10 @@ public class Contract {
     Boolean deleted = false;
      String adminSignatureUrl;
  String userSignatureUrl;
+
+    Double registration;
+    Double maintenance;
+    Double insurance;
+    Double cleaning;
+    Double operationPerMonth;
 }

@@ -71,6 +71,7 @@ public class OwnerContractService {
         String userSignatureUrl = checkingService.uploadSignatureFile(req.getUserSignature(), "user");
                 String adminSignatureUrl = checkingService.uploadSignatureFile(req.getAdminSignature(), "admin");
         Vehicle vehicle = contract.getVehicle();
+
         OwnerContract oc = OwnerContract.builder()
                 .contract(contract)
                 .user(user)
@@ -81,6 +82,11 @@ public class OwnerContractService {
                 .sharePercentage(req.getSharePercentage())
                 .status(OwnerContractStatus.ACTIVE)
                 .vehicle(vehicle)
+                .insurance(contract.getInsurance()*req.getSharePercentage()*0.01)
+                .maintenance(contract.getMaintenance()*req.getSharePercentage()*0.01)
+                .cleaning(contract.getCleaning()*req.getSharePercentage()*0.01)
+                .registration(contract.getRegistration()*req.getSharePercentage()*0.01)
+                .operationPerMonth(contract.getOperationPerMonth()*req.getSharePercentage()*0.01)
                 .build();
 
         ownerContractRepository.save(oc);
@@ -92,6 +98,7 @@ public class OwnerContractService {
                         .user(user)
                         .vehicle(contract.getVehicle())
                         .totalSharePercentage(0.0)
+                        .createdAt(LocalDateTime.now())
                         .status(OwnershipStatus.ACTIVE)
                         .build());
 
@@ -131,6 +138,11 @@ public class OwnerContractService {
                                 .contractStatus(oc.getContract().getStatus().name())
                                 .createdAt(oc.getCreatedAt())
                                 .contractId(oc.getContract().getContractId())
+                                .insurance(oc.getInsurance())
+                                .registration(oc.getRegistration())
+                                .maintenance(oc.getMaintenance())
+                                .cleaning(oc.getCleaning())
+                                .operationPerMonth(oc.getOperationPerMonth())
                                 .build();
         }
 }

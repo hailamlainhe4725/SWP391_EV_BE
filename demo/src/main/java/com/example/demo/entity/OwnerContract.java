@@ -47,4 +47,10 @@ public class OwnerContract {
 
          String adminSignatureUrl;
      String userSignatureUrl;
+
+         Double registration;
+    Double maintenance;
+    Double insurance;
+    Double cleaning;
+    Double operationPerMonth;
 }

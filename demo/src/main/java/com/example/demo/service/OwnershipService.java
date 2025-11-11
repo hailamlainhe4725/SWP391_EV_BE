@@ -96,7 +96,7 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(vehicleId)
     private OwnershipResponse mapToResponse(Ownership o) {
         return OwnershipResponse.builder()
                 .ownershipId(o.getOwnershipId())
-                .userName(o.getUser().getFullName())
+                .userName(o.getUser().getEmail())
                 .vehicleName(o.getVehicle().getBrand() + " " + o.getVehicle().getModel())
                 .totalSharePercentage(o.getTotalSharePercentage())
                 .status(o.getStatus().name())

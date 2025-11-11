@@ -68,6 +68,7 @@ public class StaffCheckingService {
 Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicleId())
     .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found or deleted"));
 
+    if(req.getBatteryPercent()<0 || req.getBatteryPercent()>100) throw new RuntimeException("lam cho gi co chuyen do");
 
         Booking booking = bookingRepository.findById(req.getBookingId())
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
@@ -166,6 +167,7 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicl
                         .orElseThrow(() -> new RuntimeException("Missing CheckOut record"));
 
                 Double distanceTraveled = sc.getOdometer() - checkout.getOdometer();
+                if(distanceTraveled < 0) throw new RuntimeException("sao di z duoc ");
                 Double batteryUsed = checkout.getBatteryPercent() - sc.getBatteryPercent();
                 sc.setBatteryUsedPercent(batteryUsed);
                 sc.setDistanceTraveled(distanceTraveled);

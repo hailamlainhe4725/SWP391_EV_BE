@@ -22,4 +22,9 @@ public class ContractResponse {
     private LocalDate startDate;
     private LocalDate endDate;
     private LocalDateTime createdAt;
+        private Double insurance;
+    private Double registration;
+    private Double maintenance;
+    private Double cleaning;
+    private Double operationPerMonth;
 }

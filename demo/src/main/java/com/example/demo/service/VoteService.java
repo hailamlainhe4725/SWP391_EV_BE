@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -36,9 +37,9 @@ public class VoteService {
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 
                 double ratio = switch (req.getDecisionType()) {
-                        case MINOR -> 0.0;
-                        case MEDIUM -> 0.5;
-                        case MAJOR -> 0.75;
+                        case MINOR -> 0.4;
+                        case MEDIUM -> 0.6;
+                        case MAJOR -> 0.8;
                 };
 
                 VoteTopic topic = VoteTopic.builder()
@@ -50,6 +51,7 @@ public class VoteService {
                                 .requiredRatio(ratio)
                                 .status(VoteStatus.PENDING)
                                 .amount(req.getAmount())
+                                .createdAt(LocalDateTime.now())
                                 .build();
 
                 voteTopicRepository.save(topic);
@@ -113,6 +115,7 @@ public class VoteService {
                                 .percentCoOwner(ownership.getTotalSharePercentage())
                                 .vehicle(topic.getVehicle())
                                 .choice(req.isAgree())
+                                .votedAt(LocalDateTime.now())
                                 .build();
 
                 voteRepository.save(vote);
@@ -124,12 +127,7 @@ public VoteTopicResponse calculateResult(Long topicId) {
     VoteTopic topic = voteTopicRepository.findById(topicId)
             .orElseThrow(() -> new RuntimeException("Topic not found"));
 
-    // Nếu là quyết định minor thì duyệt nhanh
-    if (topic.getDecisionType() == DecisionType.MINOR) {
-        topic.setStatus(VoteStatus.APPROVED);
-        voteTopicRepository.save(topic);
-        return mapTopicToResponse(topic);
-    }
+
 
     // Lấy danh sách tất cả vote của topic
     List<Vote> votes = voteRepository.findByTopic(topic);

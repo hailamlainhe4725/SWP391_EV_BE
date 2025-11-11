@@ -20,4 +20,9 @@ public class OwnerContractResponse {
         private String userSignature;
     private String adminSignature;
     private Long contractId;
+            private Double insurance;
+    private Double registration;
+    private Double maintenance;
+    private Double cleaning;
+    private Double operationPerMonth;
 }

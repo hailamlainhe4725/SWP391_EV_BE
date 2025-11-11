@@ -36,8 +36,7 @@ public class ContractService {
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
     private final FixedFeeRepository fixedFeeRepository;
-
-
+    
     public List<ContractResponse> getAll() {
         return contractRepository.findAll().stream()
                 .map(this::mapToResponse)
@@ -74,6 +73,11 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicl
                 .createdAt(req.getStartDate().atStartOfDay())
                 .userSignatureUrl(userSignatureUrl)
                 .adminSignatureUrl(adminSignatureUrl)
+                .insurance(req.getInsurance())
+                .maintenance(req.getMaintenance())
+                .cleaning(req.getCleaning())
+                .operationPerMonth(req.getOperationPerMonth())
+                .registration(req.getRegistration())
                 .build();
 
         contractRepository.save(contract);
@@ -88,8 +92,13 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicl
                         .userSignatureUrl(userSignatureUrl)
                         .adminSignatureUrl(adminSignatureUrl)
                         .createdAt(LocalDateTime.now())
-                        .sharePercentage(req.getSalePercentage())
+                        .sharePercentage(100 - req.getSalePercentage())
                         .status(OwnerContractStatus.ACTIVE)
+                        .insurance(req.getInsurance()*(100-req.getSalePercentage())*0.01)
+                        .registration(req.getRegistration()*(100-req.getSalePercentage())*0.01)
+                        .cleaning(req.getCleaning()*(100-req.getSalePercentage())*0.01)
+                        .maintenance(req.getMaintenance()*(100-req.getSalePercentage())*0.01)
+                        .operationPerMonth(req.getOperationPerMonth()*(100-req.getSalePercentage())*0.01)
                         .build();
                 ownerContractRepository.save(ownerContract);
 
@@ -116,19 +125,19 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicl
                 ownership.setUsedKmThisMonth(0.0);
 
                 ownershipRepository.save(ownership);
-                createDefaultFixedFeesForVehicle(vehicle);
+                createDefaultFixedFeesForVehicle(vehicle,req);
         }
 
         // ===== 4. Trả về response =====
         return mapToResponse(contract);
         }
 
-        private void createDefaultFixedFeesForVehicle(Vehicle vehicle) {
+        private void createDefaultFixedFeesForVehicle(Vehicle vehicle,CreateContractRequest req) {
     List<FixedFee> fees = List.of(
             FixedFee.builder()
                     .vehicle(vehicle)
                     .type(FixFeeType.Insurance)
-                    .baseAmount(1_000_000.0)
+                    .baseAmount(req.getInsurance())
                     .description("Monthly vehicle insurance")
                     .createdAt(LocalDateTime.now())
                     .deleted(false)
@@ -136,7 +145,7 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicl
             FixedFee.builder()
                     .vehicle(vehicle)
                     .type(FixFeeType.Registration)
-                    .baseAmount(130_000.0)
+                    .baseAmount(req.getRegistration())
                     .description("Registration and road fee")
                     .createdAt(LocalDateTime.now())
                     .deleted(false)
@@ -144,7 +153,7 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicl
             FixedFee.builder()
                     .vehicle(vehicle)
                     .type(FixFeeType.Maintenance)
-                    .baseAmount(800_000.0)
+                    .baseAmount(req.getMaintenance())
                     .description("Periodic maintenance")
                     .createdAt(LocalDateTime.now())
                     .deleted(false)
@@ -152,7 +161,7 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicl
             FixedFee.builder()
                     .vehicle(vehicle)
                     .type(FixFeeType.Cleaning)
-                    .baseAmount(240_000.0)
+                    .baseAmount(req.getCleaning())
                     .description("Car cleaning service")
                     .createdAt(LocalDateTime.now())
                     .deleted(false)
@@ -160,7 +169,7 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicl
             FixedFee.builder()
                     .vehicle(vehicle)
                     .type(FixFeeType.OperationPerMonth)
-                    .baseAmount(1_500_000.0)
+                    .baseAmount(req.getOperationPerMonth())
                     .description("General monthly operation cost")
                     .createdAt(LocalDateTime.now())
                     .deleted(false)
@@ -232,6 +241,11 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicl
                 .startDate(c.getStartDate())
                 .endDate(c.getEndDate())
                 .createdAt(c.getCreatedAt())
+                .insurance(c.getInsurance())
+                .registration(c.getRegistration())
+                .maintenance(c.getMaintenance())
+                .operationPerMonth(c.getOperationPerMonth())
+                .cleaning(c.getCleaning())
                 .build();
     }
 }
