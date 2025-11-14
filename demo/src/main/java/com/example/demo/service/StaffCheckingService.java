@@ -102,6 +102,22 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicl
                 throw new RuntimeException("Cannot perform Check-In before Check-Out has been confirmed.");
             }
         }
+        if (req.getStaffCheckingType() == StaffCheckingType.CheckOut) {
+Optional<StaffChecking> lastConfirmedChecking =
+    staffCheckingRepository.findTopByVehicle_VehicleIdAndStatusAndDeletedFalseOrderByCheckTimeDesc(
+        vehicle.getVehicleId(),
+        CheckingStatus.CONFIRMED
+    );
+
+if (lastConfirmedChecking.isPresent()) {
+    StaffChecking prev = lastConfirmedChecking.get();
+    if (req.getOdometer() < prev.getOdometer()) {
+        throw new RuntimeException("Odometer cannot be less than the last confirmed checking (" + prev.getOdometer() + ")");
+    }
+}
+}
+
+
 
         // 7. Upload chữ ký staff (nếu có)
         String staffSignatureUrl = uploadSignatureFile(req.getStaffSignature(), "staff");

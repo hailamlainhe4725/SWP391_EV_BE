@@ -93,6 +93,7 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(id)
         if (req.getModel() != null) v.setModel(req.getModel());
         if (req.getColor() != null) v.setColor(req.getColor());
         if (req.getSeat() != null) v.setSeat(req.getSeat());
+        if (req.getBatteryCapacityKwh() != null) v.setBatteryCapacityKwh(req.getBatteryCapacityKwh());
         if (req.getPrice() !=null) v.setPrice(req.getPrice());
         if (req.getPlateNumber() != null) v.setPlateNumber(req.getPlateNumber());
         if (req.getYear() != null) v.setYear(req.getYear());

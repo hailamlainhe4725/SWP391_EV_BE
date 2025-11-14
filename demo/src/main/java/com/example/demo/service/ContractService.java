@@ -61,6 +61,12 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicl
                 String userSignatureUrl = checkingService.uploadSignatureFile(req.getUserSignature(), "user");
                 String adminSignatureUrl = checkingService.uploadSignatureFile(req.getAdminSignature(), "admin");
         if(user.getVerifyStatus() != VerifyStatus.APPROVED) throw new RuntimeException("verify must approved");
+        double insurance = req.getInsurance() != null ? req.getInsurance() : 0.0;
+double maintenance = req.getMaintenance() != null ? req.getMaintenance() : 0.0;
+double cleaning = req.getCleaning() != null ? req.getCleaning() : 0.0;
+double operation = req.getOperationPerMonth() != null ? req.getOperationPerMonth() : 0.0;
+double registration = req.getRegistration() != null ? req.getRegistration() : 0.0;
+
         // ===== 1. Tạo Contract =====
         Contract contract = Contract.builder()
                 .user(user)
@@ -73,11 +79,11 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicl
                 .createdAt(req.getStartDate().atStartOfDay())
                 .userSignatureUrl(userSignatureUrl)
                 .adminSignatureUrl(adminSignatureUrl)
-                .insurance(req.getInsurance())
-                .maintenance(req.getMaintenance())
-                .cleaning(req.getCleaning())
-                .operationPerMonth(req.getOperationPerMonth())
-                .registration(req.getRegistration())
+                .insurance(insurance)
+                .maintenance(maintenance)
+                .cleaning(cleaning)
+                .operationPerMonth(operation)
+                .registration(registration)
                 .build();
 
         contractRepository.save(contract);
@@ -94,11 +100,11 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(req.getVehicl
                         .createdAt(LocalDateTime.now())
                         .sharePercentage(100 - req.getSalePercentage())
                         .status(OwnerContractStatus.ACTIVE)
-                        .insurance(req.getInsurance()*(100-req.getSalePercentage())*0.01)
-                        .registration(req.getRegistration()*(100-req.getSalePercentage())*0.01)
-                        .cleaning(req.getCleaning()*(100-req.getSalePercentage())*0.01)
-                        .maintenance(req.getMaintenance()*(100-req.getSalePercentage())*0.01)
-                        .operationPerMonth(req.getOperationPerMonth()*(100-req.getSalePercentage())*0.01)
+                        .insurance(insurance*(100-req.getSalePercentage())*0.01)
+                        .registration(registration*(100-req.getSalePercentage())*0.01)
+                        .cleaning(cleaning*(100-req.getSalePercentage())*0.01)
+                        .maintenance(maintenance*(100-req.getSalePercentage())*0.01)
+                        .operationPerMonth(operation*(100-req.getSalePercentage())*0.01)
                         .build();
                 ownerContractRepository.save(ownerContract);
 

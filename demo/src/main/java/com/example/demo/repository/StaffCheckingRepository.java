@@ -28,4 +28,12 @@ public interface StaffCheckingRepository extends JpaRepository<StaffChecking, Lo
     StaffCheckingType type,
     CheckingStatus status
 );
+
+
+ 
+
+        Optional<StaffChecking> findTopByVehicle_VehicleIdAndStatusAndDeletedFalseOrderByCheckTimeDesc(
+            Long vehicleId,
+            CheckingStatus status
+    );
 }

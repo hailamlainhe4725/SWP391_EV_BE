@@ -16,6 +16,7 @@ public class OwnerContractResponse {
     private Double sharePercentage;
     private Vehicle vehicle;
     private String contractStatus;
+    private String ownerContractStatus;
     private LocalDateTime createdAt;
         private String userSignature;
     private String adminSignature;
