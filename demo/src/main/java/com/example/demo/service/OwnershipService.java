@@ -142,7 +142,7 @@ Vehicle vehicle = vehicleRepository.findByVehicleIdAndDeletedFalse(vehicleId)
         int currentMonth = LocalDate.now().getMonthValue();
 
         if (ownership.getLastResetMonth() == null || !ownership.getLastResetMonth().equals(currentMonth)) {
-            double baseKmLimit = 1000.0; // Giới hạn mặc định mỗi tháng cho 100% cổ phần
+            double baseKmLimit = 3000.0; // Giới hạn mặc định mỗi tháng cho 100% cổ phần
             ownership.resetMonthlyLimit(baseKmLimit);
             ownership.setLastResetMonth(currentMonth);
             ownershipRepository.save(ownership);

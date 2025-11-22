@@ -39,8 +39,8 @@ public class PaymentService {
                 .orderCode(orderCode)
                 .amount(sumaInvoice.getTotalAmount().longValue())
                 .description("Thanh toán tháng " + sumaInvoice.getMonth())
-                .returnUrl("https://your-domain.com/success")
-                .cancelUrl("https://your-domain.com/cancel")
+                .returnUrl("https://caleb-idiomatic-milissa.ngrok-free.dev/owner/invoice")
+                .cancelUrl("https://caleb-idiomatic-milissa.ngrok-free.dev/owner/invoice")
                 .build();
 
         CreatePaymentLinkResponse resp = payOS.paymentRequests().create(req);

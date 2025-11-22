@@ -139,7 +139,7 @@ public class BookingService {
                 // ✅ Tìm booking có priority cao nhất
                 Booking topBooking = dayBookings.stream()
                         .max(Comparator.comparing(Booking::getPriorityScore)
-                                .thenComparing(Booking::getCreatedAt))
+                                .thenComparing(Booking::getCreatedAt, Comparator.reverseOrder()))
                         .orElse(booking);
 
                 for (Booking b : dayBookings) {
@@ -329,7 +329,7 @@ public List<DailyDisputeWindowResponse> getDisputeWindowsForMonth(Long vehicleId
         return BookingResponse.builder()
                 .bookingId(booking.getBookingId())
                 .vehicleId(booking.getVehicle().getVehicleId())
-                .vehicleName(booking.getVehicle().getModel()+booking.getVehicle().getPlateNumber())
+                .vehicleName(booking.getVehicle().getModel()+" "+"("+booking.getVehicle().getPlateNumber()+")")
                 .userName(booking.getUser().getFullName())
                 .userEmail(booking.getUser().getEmail())
                 .bookingStatus(booking.getBookingStatus().name())
