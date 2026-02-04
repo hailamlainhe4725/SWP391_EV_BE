@@ -1,5 +1,8 @@
-target
+target/
 .git
 .gitignore
 .vscode
+.idea
 node_modules
+uploads
+*.log
